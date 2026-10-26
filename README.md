@@ -55,6 +55,14 @@ git clone https://github.com/Green0408/win8-metro-ui-skill.git ~/.workbuddy/skil
 - 界面模板：https://green0408.github.io/win8-metro-ui-skill/win8-tool-starter.html
 - 自检页：https://green0408.github.io/win8-metro-ui-skill/selftest.html
 
+## 姊妹项目
+
+同一套方法论的下一代 —— **[win11-fluent-ui-skill](https://github.com/Green0408/win11-fluent-ui-skill)**：
+Windows 11 / WinUI 3 / Fluent 官方规格（Direct Entrance、250ms 转场、Mica/Acrylic 近似），
+另带**录屏动效反解**能力（发一段录屏就能逐帧对齐参数）。
+
+在线看：https://green0408.github.io/win11-fluent-ui-skill/selftest.html
+
 ---
 
 以下为原始调研记录。
