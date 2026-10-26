@@ -1,16 +1,29 @@
-# Win8 / Metro UI KIT — 一个生成 Win8 风格工具界面的 skill
+# Win8 / Metro UI KIT
 
-把 Win8 / Metro 的**官方**动画参数（时长 / 延迟 / 缓动曲线 / 关键帧）和控件几何、配色、字体斜坡，
-整理成一套可执行的 KIT：**模板 + 规范检查器 + 官方数值表**，让 AI 照着它生成界面时不用凭记忆瞎写数值。
+**这是一个 Agent Skill。** 装上之后，对 AI 说「照 KIT 做一个 XX 工具界面」，它就会用 Win8 官方动画参数
+（时长 / 延迟 / 缓动曲线 / 关键帧）和官方控件几何去生成界面，而不是凭记忆瞎编数值。
+
+把 Win8 / Metro 的官方规格整理成一套可执行的 KIT：**模板 + 规范检查器 + 官方数值表**。
+
+- **类型**：Agent Skill —— 根目录 `SKILL.md` 带 `name` / `description` 头信息，属于「一个目录即一个技能」的约定，
+  识别方式是 `SKILL.md`，不是某个平台专属格式
+- **触发**：说「照 KIT 做一个「<工具名>」工具界面」即可，细节见 `SKILL.md`
+- **安装**：克隆到 skills 目录，无依赖、无需构建（见下）
+- **许可**：MIT，见 `LICENSE`；`raw/` 为微软 WinJS 源码节选，保留原 MIT 声明
 
 ## 安装
 
 ```bash
-git clone https://github.com/<你的用户名>/win8-metro-ui.git ~/.workbuddy/skills/win8-metro-ui
+git clone https://github.com/Green0408/win8-metro-ui.git ~/.workbuddy/skills/win8-metro-ui
 ```
 
-`~/.workbuddy/skills/` 是 WorkBuddy 的用户级 skill 目录，放进去后新开一个会话即可生效。
-（其他支持 `SKILL.md` 约定的 Agent 工具同理，把整个目录放进它的 skills 目录即可。）
+| 工具 | skills 目录 |
+|---|---|
+| WorkBuddy | `~/.workbuddy/skills/` |
+| Claude Code | `~/.claude/skills/` |
+| 其他支持 `SKILL.md` 的 Agent | 放进该工具约定的 skills 目录，保证 `SKILL.md` 在目录根 |
+
+放进去后**新开一个会话**生效——`SKILL.md` 头部的 `description` 就是它的触发条件，不需要额外注册。
 
 ## 一句话使用
 
@@ -21,10 +34,26 @@ git clone https://github.com/<你的用户名>/win8-metro-ui.git ~/.workbuddy/sk
 
 交付前跑 `python3 check_ui_conventions.py <生成的文件.html>`，要求「合计未通过：0」。
 
-## 许可
+## 目录里都是什么
 
-本仓库代码与文档以 MIT 发布，见 `LICENSE`。`raw/` 下为微软 WinJS 源码节选，按原 MIT 许可随附，
-版权归 Microsoft Corporation。
+| 文件 | 作用 |
+|---|---|
+| `SKILL.md` | 技能入口（frontmatter 定义 name / description） |
+| `KIT.md` | 给 AI 的执行契约：骨架、分批、边栏、AppBar、控件清单 |
+| `win8-compose.md` | 动手前先定模块：5 个问题 → A/B/C/D 四套处方 |
+| `win8-tool-starter.html` | 可拆装的界面模板（复制它改业务） |
+| `win8-animations.js` / `win8-animation-library.css` / `win8-controls.css` | 三个必需资产，与模板同层引用 |
+| `official-values.md` / `.json` | 61 条命名动画 + 102 条过渡的官方参数表 |
+| `where-used.md` / `official-api-coverage.md` | 反查表：这个元素该用哪条动画 / 哪些 API 官方确实提供 |
+| `check_ui_conventions.py` | 规范检查器：把 KIT 规则可执行化，交付前必跑 |
+| `selftest.html` / `win8-animation-demo.html` | 自检页 / 动画演示页（可在线看） |
+| `raw/` | WinJS 官方源码节选，所有数值的唯一来源 |
+
+## 在线看效果
+
+- 动画演示：https://green0408.github.io/win8-metro-ui/win8-animation-demo.html
+- 界面模板：https://green0408.github.io/win8-metro-ui/win8-tool-starter.html
+- 自检页：https://green0408.github.io/win8-metro-ui/selftest.html
 
 ---
 
@@ -49,7 +78,7 @@ git clone https://github.com/<你的用户名>/win8-metro-ui.git ~/.workbuddy/sk
 ## 拿它生成新界面（一句话）
 
 ```text
-照 win8-official-animations 的 KIT 做一个「<工具名>」工具界面。
+照 win8-metro-ui 的 KIT 做一个「<工具名>」工具界面。
 用途：<一句话>。列表项=<字段>，详情=<字段>，面板设置=<项>，应用栏命令=<项>。
 ```
 
@@ -274,7 +303,7 @@ MIT 许可，可自由用于商业项目，保留许可声明即可。
 - **阶段二 · 末态校验**：等动画完成后检查末态内联样式是否落位、返回的 Promise 是否兑现。
 
 ```bash
-cd win8-official-animations
+cd win8-metro-ui
 python3 -m http.server 8791     # 然后访问 http://127.0.0.1:8791/selftest.html
 ```
 
