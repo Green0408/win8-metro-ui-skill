@@ -14,7 +14,7 @@
 ## 安装
 
 ```bash
-git clone https://github.com/Green0408/win8-metro-ui.git ~/.workbuddy/skills/win8-metro-ui
+git clone https://github.com/Green0408/win8-metro-ui-skill.git ~/.workbuddy/skills/win8-metro-ui
 ```
 
 | 工具 | skills 目录 |
@@ -51,9 +51,9 @@ git clone https://github.com/Green0408/win8-metro-ui.git ~/.workbuddy/skills/win
 
 ## 在线看效果
 
-- 动画演示：https://green0408.github.io/win8-metro-ui/win8-animation-demo.html
-- 界面模板：https://green0408.github.io/win8-metro-ui/win8-tool-starter.html
-- 自检页：https://green0408.github.io/win8-metro-ui/selftest.html
+- 动画演示：https://green0408.github.io/win8-metro-ui-skill/win8-animation-demo.html
+- 界面模板：https://green0408.github.io/win8-metro-ui-skill/win8-tool-starter.html
+- 自检页：https://green0408.github.io/win8-metro-ui-skill/selftest.html
 
 ---
 
