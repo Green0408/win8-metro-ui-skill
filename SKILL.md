@@ -65,6 +65,10 @@ description: 用 Win8 / Metro 官方规格生成工具界面：官方 WinJS 动�
 - **转场一律走 `transitionTo()`**：不要自己切 `.back` 类（会留下出场残留变成黑屏）。
 - **分批进入**：页内区域打 `data-batch`，大标题独占批次 1，交错 `min(83×i, 333)`ms；
   默认从右往左滑，用 `contentOffset()` 给 `{left:'100px'}`。
+- **触屏按下态**：KIT 已关闭 `-webkit-tap-highlight-color`（否则安卓上点任何元素先闪一块
+  半透明方块）。所以**你新加的可点类必须自己写 `:active`**（官方可点类已有）：按下档用官方
+  `@listPress` `rgba(255,255,255,.2)` 的**叠加层**（`background-image: linear-gradient(...)`），
+  不要换底色 —— 否则选中行的底色会被盖掉；禁用项按下不许亮（规则 22）。
 
 ## 最高频错误（症状 → 原因）
 

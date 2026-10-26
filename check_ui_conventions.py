@@ -456,6 +456,49 @@ def check(path: Path):
             add(has_sel, "导航项有选中态（aria-current + 左缘指示条）",
                 "" if has_sel else "官方：Selected items draw their selection indicators along their left edge")
 
+    # 22. 触屏点按反馈：KIT 关掉了 UA 系统高亮，可点类必须自带 :active（KIT.md 规则 22）
+    #     -webkit-tap-highlight-color 可继承，浏览器默认 ≈ rgba(0,0,0,.18)（Android 偏蓝）：
+    #     不覆盖它，手机上点按钮/应用栏命令/列表行，会先闪一块生硬的半透明方框，然后才响应。
+    #     只关高亮不够 —— 原本只有 :hover 的类会变成「点下去完全没反应」，两件都要查。
+    kit_css_file = HERE / "win8-controls.css"
+    if kit_css_file.exists():
+        kit_css = kit_css_file.read_text(encoding="utf-8")
+        ok_tap = re.search(r"-webkit-tap-highlight-color\s*:\s*transparent", kit_css)
+        add(bool(ok_tap), "KIT：关闭 UA 触屏高亮（-webkit-tap-highlight-color）",
+            "" if ok_tap
+            else "win8-controls.css 缺 :root { -webkit-tap-highlight-color: transparent }（KIT.md 规则 22）")
+        # 官方可点类漏一个 :active，那个控件在手机上就彻底没有按下反馈
+        miss_press = [c for c in ("win-button", "win-command", "win-link", "win-splitviewcommand-button")
+                      if not re.search(r"\." + c + r"(?![\w-])[^{}]*:active", kit_css)]
+        add(not miss_press, "KIT：官方可点类都带 :active",
+            "" if not miss_press else "缺按下态：" + ", ".join("." + c for c in miss_press))
+
+    # 22b. 页面自建的可点类：写了 :hover 就必须写 :active（触屏上 :hover 会一直粘着）
+    own_css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+    hover_bases = []
+    for m in re.finditer(r"([^{}]+)\{([^{}]*)\}", own_css):
+        for sel in m.group(1).split(","):
+            sel = sel.strip()
+            if ":hover" in sel:
+                base = sel.split(":hover")[0].strip()
+                if base:
+                    hover_bases.append(base)
+    no_press = []
+    for base in dict.fromkeys(hover_bases):
+        pat = r"\s*".join(re.escape(part) for part in base.split()) + r"[^{}]*:active"
+        if not re.search(pat, own_css):
+            no_press.append(base)
+    warn(not no_press, "自建可点类有 :hover 也有 :active",
+         "" if not no_press
+         else "这些选择器只有 hover，触屏按下去没有反馈：" + "; ".join(no_press[:3])
+              + "（加一条同选择器的 :active，底色压一档）")
+
+    # 22c. 页面不得把 UA 高亮重新打开（KIT 已统一关闭）
+    hl_bad = [v.strip() for v in re.findall(r"-webkit-tap-highlight-color\s*:\s*([^;}]+)", own_css)
+              if v.strip() != "transparent"]
+    add(not hl_bad, "不复写 -webkit-tap-highlight-color（KIT 已统一关闭）",
+        "" if not hl_bad else "页面写回了 " + ", ".join(hl_bad[:2]) + "（会重新盖出一层方块）")
+
     return results
 
 

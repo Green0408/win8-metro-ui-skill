@@ -21,6 +21,16 @@
    ⚠ 不要设成白色：开关 ON 态的白滑块会在白轨道上看不见。 */
 :root { --win-accent: #60cdff; }
 
+/* ── 触屏点按：关掉 UA 系统高亮，反馈统一交给 :active ─────────────────────
+   -webkit-tap-highlight-color 是**可继承**属性，浏览器默认值 ≈ rgba(0,0,0,.18)
+   （Android Chrome 偏蓝）。WinJS 的 less 里没有这一条（那是 IE/系统自绘时代的产物），
+   所以 KIT 从来没覆盖过它 —— 结果是在手机上点按钮、应用栏命令、列表行，
+   都会先闪一块生硬的半透明方框，然后才发生操作，和 Metro「按下 = 底色压暗/提亮一档」
+   完全不是一套语言。
+   写 :root 而不是 *（可继承，一处足够；且弹层、边栏都挂在 body 下，写局部容器会漏）。
+   配套要求：可点类必须自己写 :active（见下方各控件），否则关掉高亮后按下去毫无反应。 */
+:root { -webkit-tap-highlight-color: transparent; }
+
 /* ── 字体与字号斜坡（官方 font-definitions.less）───────────────────────── */
 @font-face { font-family: "Segoe UI"; font-weight: 200; src: local("Segoe UI Light"); }
 @font-face { font-family: "Segoe UI"; font-weight: 300; src: local("Segoe UI Semilight"); }

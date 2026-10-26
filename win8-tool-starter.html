@@ -103,6 +103,10 @@
     display: flex; justify-content: space-between; align-items: center; gap: 10px;
   }
   .row.active { background: #1d3350; }
+  /* 按下态用**叠加层**而不是换底色：选中行（.row.active）的底色要留住，
+     叠加的白就是官方 @listPress（colors-intrinsic.less）rgba(255,255,255,.2) ——
+     Win8 的 ListView 按下层也是这么画的（白色半透明盖在原底色上，所以按下变亮） */
+  .row:active { background-image: linear-gradient(rgba(255, 255, 255, .2), rgba(255, 255, 255, .2)); }
   .row .win-command { padding: 4px 10px; font-size: 13px; }
   /* 容器静止不动（保留底色与尺寸），动画只作用于里面的内容 —— 官方内容过渡就是这个用法 */
   .detail { background: #141414; padding: 18px; min-height: 220px; }
@@ -145,6 +149,8 @@
   #popup.open { visibility: visible; }
   #popup div { padding: 9px 16px; cursor: pointer; }
   #popup div:hover { background: #3a3a3a; }
+  /* 按下态：同一个 @listPress 叠加层（关掉 UA 高亮后，菜单项必须有按下反馈） */
+  #popup div:active { background: linear-gradient(rgba(255, 255, 255, .2), rgba(255, 255, 255, .2)); }
 </style>
 </head>
 <body>

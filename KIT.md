@@ -440,6 +440,30 @@
     审查规则只认"画虚线框的规则"：选择器里出现 `:focus` 却不带 `:focus-visible` 就判失败
     （下拉框现在不画虚线框，自然不受影响）。
 
+22. **触屏反馈统一走 `:active`，KIT 已关闭 `-webkit-tap-highlight-color`**（`check_ui_conventions.py` 会检查）。
+
+    `-webkit-tap-highlight-color` 是**可继承**属性，浏览器默认值 ≈ `rgba(0,0,0,.18)`
+    （Android Chrome 偏蓝）。WinJS 的 less 里没有这条（那是 IE / 系统自绘控件时代的产物），
+    所以 KIT 从来没覆盖过它 —— 结果是手机上点按钮、应用栏命令、列表行、菜单项，
+    都会先闪一块**生硬的半透明方块**，然后才发生操作。这跟 Metro 的「按下 = 底色压暗/提亮一档」
+    完全不是一套语言。
+
+    `win8-controls.css` 已在 `:root` 关闭它（写 `:root` 而不是 `*`：属性可继承，一处足够；
+    而且弹层、边栏都挂在 `body` 下，写 `.xxx` 局部容器会漏）。
+
+    ⚠ **只关高亮是不够的**，两件事必须一起做 —— 关掉之后，原本只有 `:hover` 的可点类会变成
+    「点下去毫无反应」。所以：
+
+    | 要求 | 说明 |
+    |---|---|
+    | 官方可点类自带 `:active` | `.win-button` / `.win-command` / `.win-link` / `.win-splitviewcommand-button` 都有；KIT 已保证，检查器会复核 |
+    | **新增可点类必须自己补 `:active`** | KIT 管不到业务自建的类（`.row`、`#popup div` 这种），漏了就是"按下没反馈" |
+    | 按下档位 | 官方 `@listPress` = `rgba(255,255,255,.2)`（暗主题，浅色主题 `.2` 黑）。**用叠加层而不是换底色**：`background-image: linear-gradient(<同一色>, <同一色>)` —— 选中行的底色（如 `.row.active`）才留得住 |
+    | 禁用态 | `aria-disabled="true"` / `:disabled` 的元素按下**不许**亮 |
+    | 选中态 | 已选中项按六档语义整体上移一档：hover 档即 pressed，按下回 hover 档，别压成 pressed（否则像被取消选中） |
+
+    页面里**不要**再写一遍 `-webkit-tap-highlight-color`（KIT 已统一关闭，写回来就又盖方块）。
+
 ## 4. 常用调用一览（复制即用）
 
 ```js
@@ -475,12 +499,13 @@ A.slow = true;              // ×3 慢放审阅
 A.isAnimationEnabled = false; // 等价于系统"关闭不必要的动画"
 ```
 
-## 5. 交付前自检（三步都要过）
+## 5. 交付前自检（四步都要过）
 
 ```bash
 python3 check_ui_conventions.py 你的文件.html     # 静态规范检查
 # 浏览器打开 selftest.html → 标题应为 ALL PASS（库自身回归）
 # 浏览器打开你的界面 → 点一遍所有命令，控制台零报错
+# 手机（或 DevTools 设备模拟）点一遍按钮/命令/列表行 → 不应有半透明方块闪现，按下底色要变
 ```
 
 ## 6. 不要做的事
