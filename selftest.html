@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Win8 动画库自检</title>
+<style>
+  body { background: #000; color: #eee; font: 13px/1.6 ui-monospace, Menlo, monospace; padding: 20px; }
+  #out { white-space: pre; }
+  .box { position: absolute; left: -9999px; top: 0; width: 100px; height: 100px; background: #333; }
+</style>
+</head>
+<body>
+<p style="color:#aaa;font-family:system-ui,sans-serif;font-size:12.5px;margin:0 0 14px">阶段一校验官方参数（时长/延迟/曲线）；阶段二校验末态落位与 Promise 兑现。库内有挂钟兜底：即使浏览器暂停了动画时间轴（窗口被遮挡／切后台），元素也会在 <b>时长 + 延迟 + 150ms</b> 内落到终态。</p>
+<div id="out">running…</div>
+<div id="sandbox"></div>
+<script src="win8-animations.js"></script>
+<script>
+/*
+ * 两阶段校验：
+ *   阶段一 · 参数校验：调用动画方法后立刻读取元素上的 WAAPI 动画对象，
+ *            断言 duration / delay / easing 与 WinJS 官方源码逐条相等（不受渲染抖动影响）。
+ *   阶段二 · 末态校验：用官方调试开关 ×1/20 加速重跑，等待动画完成，检查末态样式落位
+ *            以及返回的 Promise 是否兑现。加速只为规避后台标签页节流，落位结果与速度无关。
+ */
+(async function () {
+  var A = window.Win8Anim;
+  var sandbox = document.getElementById('sandbox');
+  var lines = [], pass = 0, fail = 0;
+  var STD = 'cubic-bezier(0.1, 0.9, 0.2, 1)';
+
+  function el() {
+    var d = document.createElement('div');
+    d.className = 'box';
+    sandbox.appendChild(d);
+    return d;
+  }
+  function norm(v) { return typeof v === 'string' ? v.replace(/\s+/g, '') : v; }
+  function byKey(a, b) {
+    return (a.duration - b.duration) ||
+      (norm(a.easing) < norm(b.easing) ? -1 : norm(a.easing) > norm(b.easing) ? 1 : 0) ||
+      (a.delay - b.delay);
+  }
+  function timings(node) {
+    return node.getAnimations().map(function (a) {
+      var t = a.effect.getTiming();
+      return { duration: t.duration, delay: t.delay, easing: norm(t.easing) };
+    }).sort(byKey);
+  }
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  function settle(node, timeoutMs) {
+    var deadline = Date.now() + (timeoutMs || 8000);
+    return new Promise(function (resolve) {
+      (function poll() {
+        if (node.getAnimations().length === 0 || Date.now() > deadline) { return resolve(); }
+        setTimeout(poll, 60);
+      })();
+    });
+  }
+  function eq(a, b) {
+    if (typeof a === 'number' && typeof b === 'number') { return Math.abs(a - b) < 0.51; }
+    return a === b;
+  }
+  function report(ok, label, detail) {
+    ok ? pass++ : fail++;
+    lines.push((ok ? 'PASS' : 'FAIL') + '  ' + label.padEnd(26) + ' ' + detail);
+    document.getElementById('out').textContent = lines.join('\n');
+  }
+  function heading(t) {
+    lines.push('', '-- ' + t + ' ' + new Array(Math.max(2, 50 - t.length)).join('-'));
+    document.getElementById('out').textContent = lines.join('\n');
+  }
+
+  var CASES = [
+    ['fadeIn', function (n) { return A.fadeIn(n); },
+      [{ duration: 250, delay: 0, easing: 'linear' }],
+      function (n) { return n.style.opacity === '1'; }],
+
+    ['fadeOut', function (n) { return A.fadeOut(n); },
+      [{ duration: 167, delay: 0, easing: 'linear' }],
+      function (n) { return n.style.opacity === '0'; }],
+
+    ['crossFade', function (n) { return A.crossFade(n, el()); },
+      [{ duration: 167, delay: 0, easing: 'linear' }],
+      function (n) { return n.style.opacity === '1'; }],
+
+    ['pointerDown', function (n) { return A.pointerDown(n); },
+      [{ duration: 167, delay: 0, easing: STD }],
+      function (n) { return /0\.975/.test(n.style.transform); }],
+
+    ['pointerUp', function (n) { return A.pointerUp(n); },
+      [{ duration: 167, delay: 0, easing: STD }],
+      function (n) { return n.style.transform === ''; }],
+
+    ['showEdgeUI', function (n) { return A.showEdgeUI(n); },
+      [{ duration: 367, delay: 0, easing: STD }],
+      function (n) { return n.style.transform === 'none'; }],
+
+    ['hideEdgeUI', function (n) { return A.hideEdgeUI(n); },
+      [{ duration: 367, delay: 0, easing: STD }],
+      function (n) { return /-70px/.test(n.style.transform); }],
+
+    ['showPanel', function (n) { return A.showPanel(n); },
+      [{ duration: 550, delay: 0, easing: STD }],
+      function (n) { return n.style.transform === 'none'; }],
+
+    ['hidePanel', function (n) { return A.hidePanel(n); },
+      [{ duration: 550, delay: 0, easing: STD }],
+      function (n) { return /364px/.test(n.style.transform); }],
+
+    ['showPopup', function (n) { return A.showPopup(n); },
+      [{ duration: 83, delay: 83, easing: 'linear' }, { duration: 367, delay: 0, easing: STD }],
+      function (n) { return n.style.opacity === '1' && n.style.transform === 'none'; }],
+
+    ['hidePopup', function (n) { return A.hidePopup(n); },
+      [{ duration: 83, delay: 0, easing: 'linear' }],
+      function (n) { return n.style.opacity === '0'; }],
+
+    ['enterPage', function (n) { return A.enterPage(n); },
+      [{ duration: 170, delay: 0, easing: STD }, { duration: 1000, delay: 0, easing: STD }],
+      function (n) { return n.style.transform === 'none' && n.style.opacity === '1'; }],
+
+    ['exitPage', function (n) { return A.exitPage(n); },
+      [{ duration: 117, delay: 0, easing: 'linear' }, { duration: 117, delay: 0, easing: 'linear' }],
+      function (n) { return n.style.opacity === '0'; }],
+
+    ['enterContent', function (n) { return A.enterContent(n); },
+      [{ duration: 170, delay: 0, easing: STD }, { duration: 550, delay: 0, easing: STD }],
+      function (n) { return n.style.transform === 'none'; }],
+
+    ['exitContent', function (n) { return A.exitContent(n); },
+      [{ duration: 117, delay: 0, easing: 'linear' }, { duration: 117, delay: 0, easing: 'linear' }],
+      function (n) { return n.style.opacity === '0'; }],
+
+    ['updateBadge', function (n) { return A.updateBadge(n); },
+      [{ duration: 367, delay: 0, easing: STD }, { duration: 1333, delay: 0, easing: STD }],
+      function (n) { return n.style.transform === 'none'; }],
+
+    ['slideUp', function (n) { return A.slideUp(n); },
+      [{ duration: 350, delay: 0, easing: 'cubic-bezier(0, 2, 0, 2)' }, { duration: 350, delay: 0, easing: 'cubic-bezier(0.17,0.79,0.215,1.0025)' }],
+      function (n) { return n.style.transform === 'none'; }],
+
+    ['slideDown', function (n) { return A.slideDown(n); },
+      [{ duration: 250, delay: 0, easing: 'cubic-bezier(1,-0.42,0.995,-0.425)' }, { duration: 250, delay: 0, easing: 'cubic-bezier(0.3825,0.0025,0.8775,-0.1075)' }],
+      function (n) { return /200px/.test(n.style.transform); }],
+
+    ['turnstileForwardIn', function (n) { return A.turnstileForwardIn(n); },
+      [{ duration: 300, delay: 0, easing: 'cubic-bezier(0, 2, 0, 2)' }, { duration: 300, delay: 0, easing: 'cubic-bezier(0.01,0.975,0.4775,0.9775)' }],
+      function (n) { return /rotateY\(0deg\)/.test(n.style.transform); }],
+
+    ['turnstileForwardOut', function (n) { return A.turnstileForwardOut(n); },
+      [{ duration: 128, delay: 0, easing: 'cubic-bezier(1,-0.42,0.995,-0.425)' }, { duration: 128, delay: 0, easing: 'cubic-bezier(0.4925,0.01,0.7675,-0.01)' }],
+      function (n) { return /rotateY\(-50deg\)/.test(n.style.transform); }],
+
+    ['continuumForwardIn', function (n) { return A.continuumForwardIn(n); },
+      [{ duration: 350, delay: 0, easing: 'cubic-bezier(0.33, 0.18, 0.11, 1)' }],
+      function (n) { return /scale\(1, 1\)/.test(n.style.transform); }],
+
+    ['continuumBackwardOut', function (n) { return A.continuumBackwardOut(n); },
+      [{ duration: 167, delay: 0, easing: 'cubic-bezier(0.3825,0.0025,0.8775,-0.1075)' }],
+      function (n) { return /scale\(0\.5/.test(n.style.transform); }],
+
+    ['drillInIncoming', function (n) { return A.drillInIncoming(n); },
+      [{ duration: 500, delay: 0, easing: STD }],
+      function (n) { return /scale\(1\)/.test(n.style.transform); }],
+
+    ['drillInOutgoing', function (n) { return A.drillInOutgoing(n); },
+      [{ duration: 233, delay: 0, easing: STD }],
+      function (n) { return /scale\(1\.29\)/.test(n.style.transform); }],
+
+    // 官方 dragSourceStart 是两条独立过渡：transform 240ms + opacity 240ms（都从当前值起步）
+    ['dragSourceStart', function (n) { return A.dragSourceStart(n, el()); },
+      [{ duration: 240, delay: 0, easing: STD }, { duration: 240, delay: 0, easing: STD }],
+      function (n) { return /scale\(1\.05\)/.test(n.style.transform) && n.style.opacity === '0.65'; }],
+
+    // 官方 dragSourceEnd 同样是两条：transform → "" 500ms + opacity → 1 500ms
+    ['dragSourceEnd', function (n) { return A.dragSourceEnd(n); },
+      [{ duration: 500, delay: 0, easing: STD }, { duration: 500, delay: 0, easing: STD }],
+      function (n) { return n.style.transform === '' && n.style.opacity === '1'; }],
+
+    // ── 本轮新增覆盖 ──────────────────────────────────────────────────
+    ['dragBetweenEnter', function (n) { return A.dragBetweenEnter(n); },
+      [{ duration: 200, delay: 0, easing: STD }],
+      function (n) { return /scale\(0\.95\)/.test(n.style.transform) && /-40px/.test(n.style.transform); }],
+
+    ['dragBetweenLeave', function (n) { return A.dragBetweenLeave(n); },
+      [{ duration: 200, delay: 0, easing: STD }],
+      function (n) { return n.style.transform === 'scale(0.95)'; }],
+
+    ['swipeReveal', function (n) { return A.swipeReveal(n); },
+      [{ duration: 300, delay: 0, easing: STD }],
+      function (n) { return /25px/.test(n.style.transform); }],
+
+    ['swipeSelect', function (n) { return A.swipeSelect(n, el()); },
+      [{ duration: 300, delay: 0, easing: STD }],
+      function (n) { return n.style.transform === ''; }],
+
+    ['swipeDeselect', function (n) { return A.swipeDeselect(n, el()); },
+      [{ duration: 300, delay: 0, easing: STD }],
+      function (n) { return n.style.transform === ''; }],
+
+    ['createAddToSearchListAnimation', function (n) { return A.createAddToSearchListAnimation(n, []).execute(); },
+      [{ duration: 117, delay: 0, easing: 'linear' }],
+      function (n) { return n.style.opacity === '1'; }],
+
+    ['createDeleteFromSearchListAnimation', function (n) { return A.createDeleteFromSearchListAnimation(n, []).execute(); },
+      [{ duration: 93, delay: 0, easing: 'linear' }],
+      function (n) { return n.style.opacity === '0'; }],
+
+    ['createPeekAnimation', function (n) { return A.createPeekAnimation(null, n).execute(); },
+      [{ duration: 2000, delay: 0, easing: STD }],
+      function (n) { return n.style.transform === 'none'; }],
+
+    ['turnstileBackwardIn', function (n) { return A.turnstileBackwardIn(n); },
+      [{ duration: 300, delay: 0, easing: 'cubic-bezier(0,2,0,2)' }, { duration: 300, delay: 0, easing: 'cubic-bezier(0.01,0.975,0.4775,0.9775)' }],
+      function (n) { return /rotateY\(0deg\)/.test(n.style.transform); }],
+
+    ['turnstileBackwardOut', function (n) { return A.turnstileBackwardOut(n); },
+      [{ duration: 128, delay: 0, easing: 'cubic-bezier(1,-0.42,0.995,-0.425)' }, { duration: 128, delay: 0, easing: 'cubic-bezier(0.4925,0.01,0.7675,-0.01)' }],
+      function (n) { return /rotateY\(80deg\)/.test(n.style.transform); }],
+
+    ['continuumBackwardIn', function (n) { return A.continuumBackwardIn(n); },
+      [{ duration: 200, delay: 0, easing: 'cubic-bezier(0.33,0.18,0.11,1)' }, { duration: 250, delay: 0, easing: 'cubic-bezier(0.2975,0.7325,0.4725,0.99)' }],
+      function (n) { return /rotateX\(0deg\)/.test(n.style.transform); }],
+
+    ['continuumForwardOut', function (n) { return A.continuumForwardOut(n); },
+      [{ duration: 120, delay: 0, easing: 'cubic-bezier(0.3825,0.0025,0.8775,-0.1075)' }, { duration: 152, delay: 0, easing: 'cubic-bezier(0.3825,0.0025,0.8775,-0.1075)' }],
+      function (n) { return /rotateX\(80deg\)/.test(n.style.transform); }],
+
+    ['drillOutIncoming', function (n) { return A.drillOutIncoming(n); },
+      [{ duration: 500, delay: 0, easing: STD }],
+      function (n) { return /scale\(1\)/.test(n.style.transform); }],
+
+    ['drillOutOutgoing', function (n) { return A.drillOutOutgoing(n); },
+      [{ duration: 233, delay: 0, easing: STD }],
+      function (n) { return /scale\(0\.84\)/.test(n.style.transform); }],
+
+    ['slideRightIn', function (n) { return A.slideRightIn(n); },
+      [{ duration: 350, delay: 0, easing: 'cubic-bezier(0.17,0.79,0.215,1.0025)' }],
+      function (n) { return /translate\(0px, 0px\)/.test(n.style.transform); }],
+
+    ['slideLeftIn', function (n) { return A.slideLeftIn(n); },
+      [{ duration: 350, delay: 0, easing: 'cubic-bezier(0.17,0.79,0.215,1.0025)' }],
+      function (n) { return /translate\(0px, 0px\)/.test(n.style.transform); }],
+
+    ['slideRightOut', function (n) { return A.slideRightOut(n); },
+      [{ duration: 350, delay: 0, easing: 'cubic-bezier(0.3825,0.0025,0.8775,-0.1075)' }],
+      function (n) { return /px, 0px\)/.test(n.style.transform); }],
+
+    ['slideLeftOut', function (n) { return A.slideLeftOut(n); },
+      [{ duration: 350, delay: 0, easing: 'cubic-bezier(0.3825,0.0025,0.8775,-0.1075)' }],
+      function (n) { return /px, 0px\)/.test(n.style.transform); }],
+
+    ['createPageNavigationAnimations(turnstile)', function (n) { return A.createPageNavigationAnimations('turnstile', 'turnstile', false).entrance(n); },
+      [{ duration: 300, delay: 0, easing: 'cubic-bezier(0,2,0,2)' }, { duration: 300, delay: 0, easing: 'cubic-bezier(0.01,0.975,0.4775,0.9775)' }],
+      function () { return true; }]
+  ];
+
+  /* 阶段一：参数校验 */
+  heading('阶段一 · 参数校验（逐条对比 WinJS 官方源码）');
+  CASES.forEach(function (c) {
+    var node = el();
+    var p = c[1](node);
+    var got = timings(node);
+    var want = c[2].map(function (t) {
+      return { duration: t.duration, delay: t.delay, easing: norm(t.easing) };
+    }).sort(byKey);
+    var problems = [];
+
+    if (got.length !== want.length) {
+      problems.push('动画条数 ' + got.length + ' != ' + want.length);
+    } else {
+      for (var k = 0; k < want.length; k++) {
+        ['duration', 'delay', 'easing'].forEach(function (f) {
+          if (!eq(got[k][f], want[k][f])) {
+            problems.push('第' + (k + 1) + '条 ' + f + '=' + got[k][f] + '，官方 ' + want[k][f]);
+          }
+        });
+      }
+    }
+    node.getAnimations().forEach(function (a) { a.cancel(); });
+    if (p && p.catch) { p.catch(function () { }); }
+    report(problems.length === 0, c[0], problems.length ? '<- ' + problems.join('; ') : JSON.stringify(want));
+  });
+
+  /* 阶段二：末态校验 */
+  heading('阶段二 · 末态落位 / Promise 兑现（×1/20 加速）');
+  A.fast = true;
+  for (var i = 0; i < CASES.length; i++) {
+    var c = CASES[i];
+    var node = el();
+    var resolved = false;
+    var p = c[1](node);
+    if (p && p.then) { p.then(function () { resolved = true; }); }
+    await settle(node, 5000);
+    var ok = false;
+    try { ok = c[3](node); } catch (e) { ok = false; }
+    if (!resolved) { await sleep(60); }
+    report(ok && resolved, c[0], (ok ? '末态 OK' : '末态未落位') + ' / ' + (resolved ? 'Promise 已兑现' : 'Promise 未兑现'));
+  }
+  A.fast = false;
+
+  /* 补充校验 */
+  heading('补充校验');
+
+  var group = [el(), el(), el(), el()];
+  var p4 = A.enterPage(group);
+  var delays = group.map(function (n) { return timings(n)[0].delay; });
+  report(JSON.stringify(delays) === JSON.stringify([0, 83, 166, 249]),
+    'enterPage 交错延迟', JSON.stringify(delays) + '（官方 0/83/166/249）');
+
+  // showPanel 的分批内容：面板框架 550ms；内容各自 enterPage（170ms 淡入 + 1000ms 位移），批次交错 83ms
+  var pnl = el(), pc1 = el(), pc2 = el(), pc3 = el();
+  var pPanel = A.settingsFlyoutSlideIn(pnl, null, { content: [[pc1], [pc2], [pc3]] });
+  var panelT = timings(pnl);
+  var c1T = timings(pc1);
+  var cDelays = [pc1, pc2, pc3].map(function (n) { return timings(n)[0].delay; });
+  report(panelT.length === 1 && panelT[0].duration === 550 &&
+         c1T.length === 2 && c1T[0].duration === 170 && c1T[1].duration === 1000 &&
+         JSON.stringify(cDelays) === JSON.stringify([0, 83, 166]),
+    'settingsFlyoutSlideIn',
+    '框架 550ms + 内容 170/1000ms，批次延迟 ' + JSON.stringify(cDelays) + '（官方 0/83/166）');
+  await pPanel;   // 挂钟兜底保证一定会兑现，因此这里可以安全等待
+  var panelLanded = pc1.style.opacity === '1' && pc2.style.opacity === '1' && pc3.style.opacity === '1';
+  report(panelLanded, 'showPanel 分批内容落位', '三批内容末态 opacity 均为 1' +
+    (panelLanded ? '' : '（实际 ' + [pc1, pc2, pc3].map(function (n) { return n.style.opacity || '空'; }).join('/') + '）'));
+
+  // 官方 _createUpdateListAnimation(added, deleted, affected) 的延迟规则：
+  // 有删除项 → 其余项延迟 60ms；有其余项 → 新增项再 +240（即 300ms）
+  var uAdd = el(), uDel = el(), uAff = el();
+  var pUpdate = A._createUpdateListAnimation([uAdd], [uDel], [uAff]).execute();
+  var addT = timings(uAdd), affT = timings(uAff), delT = timings(uDel);
+  var updateOk =
+    addT.length === 2 && addT[0].duration === 120 && addT[0].delay === 300 && addT[1].duration === 120 && addT[1].delay === 300 &&
+    affT.length === 1 && affT[0].duration === 400 && affT[0].delay === 60 &&
+    delT.length === 2 && delT[0].duration === 120 && delT[0].easing === 'cubic-bezier(0.11,0.5,0.24,0.96)' && delT[1].duration === 120;
+  report(updateOk, '_createUpdateListAnimation',
+    '新增 120ms×2(延迟 ' + addT[0].delay + ') + 删除 120ms×2 + 其余项 400ms(延迟 ' + affT[0].delay + ')');
+  await pUpdate;
+  [uAdd, uDel, uAff].forEach(function (n) { n.getAnimations().forEach(function (a) { a.cancel(); }); });
+
+  // 官方分批语义：顶层数组的索引是批次号，内层元素共享批次（延迟相同、一起进场）
+  var g1 = el(), g2 = el(), g3 = el(), g4 = el();
+  var pBatch = A.enterPage([[g1, g2], [g3, g4]]);
+  var batchDelays = [g1, g2, g3, g4].map(function (n) { return timings(n)[0].delay; });
+  report(JSON.stringify(batchDelays) === JSON.stringify([0, 0, 83, 83]),
+    'enterPage 分批（嵌套数组）', JSON.stringify(batchDelays) + '（官方 [[a,b],[c,d]] → 0/0/83/83）');
+  [g1, g2, g3, g4].forEach(function (n) { n.getAnimations().forEach(function (a) { a.cancel(); }); });
+  if (pBatch && pBatch.catch) { pBatch.catch(function () { }); }
+  group.forEach(function (n) { n.getAnimations().forEach(function (a) { a.cancel(); }); });
+  if (p4 && p4.catch) { p4.catch(function () { }); }
+
+  var host = document.createElement('div');
+  host.style.cssText = 'position:relative;display:flex;flex-direction:column;gap:6px;height:200px';
+  sandbox.appendChild(host);
+  for (var j = 0; j < 3; j++) {
+    var item = document.createElement('div');
+    item.className = 'box'; item.style.position = 'static'; item.style.height = '30px';
+    host.appendChild(item);
+  }
+  var added = document.createElement('div');
+  added.className = 'box'; added.style.position = 'static'; added.style.height = '30px';
+  var affected = Array.prototype.slice.call(host.children);
+  var anim = A.createAddToListAnimation(added, affected);
+  host.insertBefore(added, host.firstChild);
+  var exec = anim.execute();
+  var addedT = timings(added), affectedT = timings(affected[0]);
+  report(addedT.length === 2 && addedT[0].duration === 120 && addedT[1].duration === 120 &&
+    addedT[0].delay === 240 && addedT[1].delay === 240 &&
+    affectedT.length === 1 && affectedT[0].duration === 400 && affectedT[0].delay === 0,
+    'createAddToListAnimation', '新增 120ms×2(延迟 240) + 受影响项 400ms(延迟 0)');
+  await Promise.all([settle(added, 5000), settle(affected[0], 5000)]);
+  if (exec && exec.catch) { exec.catch(function () { }); }
+
+  A.slow = true;
+  var n1 = el(); A.fadeIn(n1);
+  var slowDur = timings(n1)[0].duration;
+  report(Math.abs(slowDur - 750) < 0.51, '_slowAnimations ×3', '250ms -> ' + slowDur + 'ms（官方 750ms）');
+  await settle(n1, 3000); A.slow = false;
+
+  A.fast = true;
+  var n2 = el(); A.fadeIn(n2);
+  var fastDur = timings(n2)[0].duration;
+  report(Math.abs(fastDur - 12.5) < 0.51, '_fastAnimations ×1/20', '250ms -> ' + fastDur + 'ms（官方 12.5ms）');
+  await settle(n2, 3000); A.fast = false;
+
+  A.enabled = false;
+  var n3 = el();
+  await A.fadeIn(n3);
+  report(timings(n3).length === 0 && n3.style.opacity === '1',
+    'isAnimationEnabled=false', '不产生动画对象，直接落位 opacity=' + n3.style.opacity);
+  A.enabled = true;
+
+  lines.push('');
+  lines.push('RESULT ' + pass + ' passed, ' + fail + ' failed');
+  document.getElementById('out').textContent = lines.join('\n');
+  document.title = fail ? 'FAIL(' + fail + ')' : 'ALL PASS';
+})();
+</script>
+</body>
+</html>

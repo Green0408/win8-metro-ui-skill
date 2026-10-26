@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>工具界面模板 · Win8/Metro KIT</title>
+<!--
+  ============================================================================
+  Win8/Metro 工具界面模板（复制这个文件开始你的工具，改业务、别改动画接线）
+  规则见 KIT.md；动画参数与用法见 win8-animations.js / official-values.md。
+  这是一个**可拆装**的骨架，不是一个必须整体复制的页面。先按工具的形态挑模块，再写业务：
+
+    | 模块             | 标记（搜这个就能定位）        | 什么时候要                              | 整块删掉的后果 |
+    |------------------|-------------------------------|-----------------------------------------|----------------|
+    | 左侧导航         | 模块：左侧导航                | 有 ≥2 个页面 / 需要跨页跳转             | 变单页；连带删 LeftMinimal 表头 |
+    | LeftMinimal 表头 | 模块：LeftMinimal 表头        | 只在有左侧导航时要                      | 窄窗口没有菜单按钮（本来也不需要）|
+    | 应用栏 AppBar    | 模块：应用栏 AppBar           | 有跨面板的命令（导入/导出/复制…）       | 少一处命令入口 |
+    | 属性面板         | 模块：属性面板                | 有持续生效的设置（开关/滑块/下拉）      | 设置得放到工具栏或页面里 |
+    | 弹出菜单         | 模块：弹出菜单                | 有上下文相关的次要动作                  | 次要动作得另找入口 |
+    | 列表 + 详情      | 业务区（#list / #detailBody） | 数据是"一列条目 + 选中看详情"           | 换成网格/表格/单块内容都行 |
+
+    **删除是安全的**：所有模块接线都做了存在性保护，删掉标记块后对应 JS 会自动跳过，
+    页面照常运行（不用手工改脚本）。删完跑一次 `check_ui_conventions.py` 确认即可。
+    组合建议与判定清单见 `win8-compose.md`；只改业务内容时，最少要改的 5 处见 `KIT.md` 第 0.1 节。
+  ============================================================================
+-->
+<link rel="stylesheet" href="win8-animation-library.css">
+<link rel="stylesheet" href="win8-controls.css">   <!-- 官方按钮/输入框/字体斜坡 -->
+<style>
+  :root { --pad-top: 60px; --appbar-h: 78px; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: #000; color: #fff; overflow: hidden;
+    font: 15px/1.5 "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+  }
+
+  /* 页面必须是整屏不透明的，否则转场时两页内容会互相透出来 */
+  .page {
+    position: absolute; inset: 0; background: #000;
+    /* 左侧让出 48px 图标条（折叠态宽度，官方值）；顶部留白 60px（原状态条 38 + 22 = 60，
+       删掉状态条后内容位置保持不变） */
+    padding: var(--pad-top) 36px 34px calc(36px + 48px); overflow-y: auto;
+  }
+  .page.back { transform: translateX(-100%); }     /* 静止在屏幕左侧外 */
+
+  /* 官方 Left 档（≥1008px）：窗格固定展开、与内容**并排**（不是覆盖），内容左侧让出 320px。
+     官方原文："The pane is expanded and positioned to the left of the content." */
+  #stage.nav-pinned .page { padding-left: calc(36px + 320px); }
+  /* 跨断点时才让内容跟着窗格一起动（用官方开合时长 350ms 与官方主力曲线 --winjs-ease-standard，
+     值来自 WinJS 的 getResizeDefaultTransitions()）。注意 .nav-anim 只在**真的跨界**时由脚本加上：
+     否则首屏就会从 84px 滑到 356px，看起来像加载抖动（实测首屏量到 355.612px 正是这个坑）。 */
+  #stage.nav-anim .page { transition: padding-left 350ms var(--winjs-ease-standard); }
+  /* 官方 IsPaneToggleButtonVisible："On larger app windows when the pane is open,
+     you may choose to hide this button" —— 只隐藏**按钮**，表头行连同 PaneTitle 留着：
+     官方 PaneTitle 本来就是"菜单按钮旁边那行字"，Left 档把按钮收掉后这一行只剩标题，
+     条目仍从 48px 行高之下开始（窗格顶部节奏三档一致）。 */
+  #stage.nav-pinned .win-splitview-panehead .win-splitviewpanetoggle { display: none; }
+
+  /* 官方 LeftMinimal（≤640px）：窗格整个收起（可见宽度 0），只剩表头里的菜单按钮；
+     打开时窗格是**浮层**盖在内容上（官方："the pane overlays the left side of the content"），
+     所以内容不再给窗格让位，只让出表头的 52px。 */
+  .win-navheader {
+    display: none;                    /* 只在 Minimal 档出现 */
+    position: absolute; top: 0; left: 0; right: 0; height: 52px; z-index: 1;   /* 官方 52px */
+    align-items: center; gap: 16px; background: #000;
+  }
+  #stage.nav-minimal .win-navheader { display: flex; }
+  /* 官方："Only the menu button is shown" —— Minimal 档收掉窗格自己那行表头（菜单按钮已经在内容区表头里），
+     否则展开时会出现两个菜单按钮、两处标题 */
+  #stage.nav-minimal .win-splitview-panehead { display: none; }
+  /* 官方 Minimal 的原文是"the pane overlays the left side of the **content**" —— 表头不属于"内容"，
+     所以展开时表头要留在窗格之外：窗格从表头（52px）下方开始，
+     **汉堡键在展开状态下依然可见、可再点一次收起**。
+     （若让窗格盖住表头，等于把唯一的关闭按钮藏了 —— 官方不是这个意思。） */
+  #stage.nav-minimal .win-splitview-panewrapper {
+    top: 52px;
+    height: calc(100% - 52px);
+  }
+  #stage.nav-minimal .page {
+    padding-left: 36px;                                     /* 不再让位给图标条（窗格是浮层） */
+    padding-top: calc(var(--pad-top) + 52px);                /* 表头占掉 52px */
+  }
+
+  /* 字号/字重一律来自 win8-controls.css 的官方字体斜坡，这里只管颜色与间距 */
+  h1 { margin: 0 0 4px; }                        /* .win-type-subheader 34/200 */
+  .sub { color: #9a9a9a; margin: 0 0 20px; }     /* .win-type-caption   12/400 */
+  .hint { color: #7fd6a0; margin: 0 0 12px; }    /* .win-type-caption */
+
+  /* 顶部状态条已删除：原来它显示"当前跑的是哪条官方动画"（模板的自证功能）。
+     信息搬到控制台了 —— 想做工具就不该有这条非 Metro 的横条。
+     想看它，把 SHOW_ANIM_LOG 打开（脚本里），模板里所有 status() 调用点原样保留。 */
+
+  /* 工具栏 */
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  /* 按钮外观一律用官方 .win-button（见 win8-controls.css），这里只放布局 */
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+  /* 主区：列表 + 详情 */
+  .workbench { display: grid; grid-template-columns: minmax(260px, 380px) 1fr; gap: 14px; align-items: start; }
+  .list { display: flex; flex-direction: column; gap: 6px; }
+  .row {
+    background: #1c1c1c; padding: 11px 14px; cursor: pointer;
+    display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  }
+  .row.active { background: #1d3350; }
+  .row .win-command { padding: 4px 10px; font-size: 13px; }
+  /* 容器静止不动（保留底色与尺寸），动画只作用于里面的内容 —— 官方内容过渡就是这个用法 */
+  .detail { background: #141414; padding: 18px; min-height: 220px; }
+  .detail h2 { margin: 0 0 10px; }                    /* .win-type-subtitle 20/400 */
+  .detail dl { margin: 0; }
+  .page-actions { margin-top: 22px; }
+  .panel-actions { margin-top: 22px; }
+  .detail dt { color: #8d8d8d; margin-top: 10px; }    /* .win-type-caption  12/400 */
+  .detail dd { margin: 2px 0 0; }
+
+  /* 贴屏幕底边的 AppBar：初始停在屏幕外，靠 showEdgeUI 滑入 */
+  #appbar {
+    position: absolute; left: 0; right: 0; bottom: 0; height: var(--appbar-h); z-index: 5;
+    background: #1f1f1f; display: flex; align-items: center; gap: 16px; padding: 0 36px;
+    transform: translateY(100%);
+  }
+  /* 应用栏命令的观感来自官方 .win-command（win8-controls.css），这里只定高度与内距 */
+  #appbar .win-command { height: var(--appbar-h); padding: 0 14px; }
+
+  /* 右侧边栏（面板）：内容区域用 .win-content 标记，交给 settingsFlyoutSlideIn 逐区域进场 */
+  #panel {
+    position: absolute; top: 0; right: 0; bottom: 0; width: 364px; z-index: 6;
+    background: #1f1f1f; padding: 26px; transform: translateX(100%);
+    overflow: hidden;   /* 内容带水平偏移进场，裁掉溢出才不飘到面板外 */
+  }
+  #panel h2 { margin: 0 0 12px; }                     /* .win-type-subtitle 20/400 */
+  #panel p { color: #b9b9b9; }                        /* .win-type-body     15/400 */
+  /* 复选框行：官方那套是行内流（框的 margin-right 8px 就是它与文字的距离）。
+     这里用 flex 只是为了让"框 + 文字"稳定居中 —— 行内流会把标签前的换行折叠成一个空格，
+     实测间距会变成 8px 外边距 + 4px 空格 ≈ 12px（开关那条注释里记过同样的坑）。 */
+  .demo-check { display: flex; align-items: center; }
+  .demo-check label { cursor: pointer; }              /* 官方没规定 label，补一条：点文字也能勾选 */
+
+  /* 弹出菜单：隐藏时必须退出命中测试，否则会吃掉下面元素的点击（KIT.md 规则 10） */
+  #popup {
+    position: absolute; left: 36px; top: 180px; z-index: 7; min-width: 200px;
+    background: #262626; border: 1px solid #3d3d3d; padding: 6px 0;
+    opacity: 0; visibility: hidden;
+  }
+  #popup.open { visibility: visible; }
+  #popup div { padding: 9px 16px; cursor: pointer; }
+  #popup div:hover { background: #3a3a3a; }
+</style>
+</head>
+<body>
+<!--
+  导航图标（官方是 Segoe MDL2 Assets / Segoe UI Symbol 字形，macOS 没有这两个字体）。
+  用 Unicode 字形回退会踩坑：三个字形来自三种不同字体，同一 font-size 下墨迹框差一倍
+  —— 实测 ▤ 11.18px / ⚙ 9.16px / ⓘ 15.62px（ⓘ 的 adv=16，是 CJK 全角字形），
+  调 font-size 也救不回来（笔画粗细仍不一致）。所以这里按官方图标框重画：
+  16×16 图标框、墨迹 12×12（四周各留 2px）、统一 1.5px 单线宽。
+  详见 KIT.md「导航图标」。
+-->
+<svg class="win-navicon-sprite" aria-hidden="true" focusable="false" width="0" height="0">
+  <!-- 工作台：窗口（标题栏 + 内容区） -->
+  <symbol id="win-navicon-board" viewBox="0 0 16 16">
+    <rect x="2.75" y="2.75" width="10.5" height="10.5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+    <path d="M2.75 6.5H13.25" fill="none" stroke="currentColor" stroke-width="1.5"/>
+  </symbol>
+  <!-- 属性面板：齿轮（8 齿，齿尖 r=6 → 墨迹 12×12；齿根伸进圆环内，不留缝） -->
+  <symbol id="win-navicon-gear" viewBox="0 0 16 16">
+    <circle cx="8" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="1.5"/>
+    <circle cx="8" cy="8" r="1.4" fill="currentColor"/>
+    <path d="M8 2V4.2" fill="none" stroke="currentColor" stroke-width="1.5"/>
+    <path d="M8 2V4.2" fill="none" stroke="currentColor" stroke-width="1.5" transform="rotate(45 8 8)"/>
+    <path d="M8 2V4.2" fill="none" stroke="currentColor" stroke-width="1.5" transform="rotate(90 8 8)"/>
+    <path d="M8 2V4.2" fill="none" stroke="currentColor" stroke-width="1.5" transform="rotate(135 8 8)"/>
+    <path d="M8 2V4.2" fill="none" stroke="currentColor" stroke-width="1.5" transform="rotate(180 8 8)"/>
+    <path d="M8 2V4.2" fill="none" stroke="currentColor" stroke-width="1.5" transform="rotate(225 8 8)"/>
+    <path d="M8 2V4.2" fill="none" stroke="currentColor" stroke-width="1.5" transform="rotate(270 8 8)"/>
+    <path d="M8 2V4.2" fill="none" stroke="currentColor" stroke-width="1.5" transform="rotate(315 8 8)"/>
+  </symbol>
+  <!-- 关于：圆圈 i（圆 r=5.25 → 墨迹 12×12） -->
+  <symbol id="win-navicon-info" viewBox="0 0 16 16">
+    <circle cx="8" cy="8" r="5.25" fill="none" stroke="currentColor" stroke-width="1.5"/>
+    <circle cx="8" cy="5.1" r="0.95" fill="currentColor"/>
+    <path d="M8 7.3V11.1" fill="none" stroke="currentColor" stroke-width="1.5"/>
+  </symbol>
+</svg>
+
+<div id="stage" class="win-splitview">
+  <!-- ═══════ 模块：左侧导航 ═══════ 不需要多页导航就整块删（含上下的导航容器 div）。
+       删掉后：下方接线自动跳过（navPane 为 null），页面变单页。
+       连带删：本块 + 紧接着的「模块：LeftMinimal 表头」。 -->
+  <!-- 左侧导航：官方 SplitView（展开 320px；收起 = 官方 closedDisplayMode 的 48px 图标条，见 KIT.md） -->
+  <div class="win-splitview-panewrapper" id="navWrapper">
+    <nav class="win-splitview-pane" id="navPane" aria-label="主导航">
+      <!-- 窗格表头行（官方结构：菜单按钮 + PaneTitle）：
+           PaneTitle 官方原文 "It takes a string and shows the text next to the menu button"。
+           折叠成 48px 图标条时，这一行的 48×48 就是最上面那一格（官方折叠宽度也是 48px），
+           所以图标 x∈[16,32] 而不是贴边。它同时把"条目距顶部太近"一并解决了 ——
+           条目从这一行下面开始（官方行高 48px）。 -->
+      <div class="win-splitview-panehead">
+        <button class="win-splitviewpanetoggle" data-act="nav-toggle"
+                aria-label="主导航" aria-controls="navPane" aria-expanded="false">
+          <span class="bars" aria-hidden="true"></span>
+        </button>
+        <span class="win-type-subtitle" id="navPaneTitle">工具名</span>
+      </div>
+
+      <div class="win-splitviewcommand">
+        <button class="win-splitviewcommand-button" data-nav="mainPage" aria-current="page">
+          <span class="win-splitviewcommand-button-content">
+            <span class="win-splitviewcommand-icon" aria-hidden="true"><svg viewBox="0 0 16 16"><use href="#win-navicon-board"></use></svg></span>
+            <span class="win-splitviewcommand-label">工作台</span>
+          </span>
+        </button>
+      </div>
+
+      <div class="win-splitviewcommand">
+        <button class="win-splitviewcommand-button" data-nav="aboutPage">
+          <span class="win-splitviewcommand-button-content">
+            <span class="win-splitviewcommand-icon" aria-hidden="true"><svg viewBox="0 0 16 16"><use href="#win-navicon-info"></use></svg></span>
+            <span class="win-splitviewcommand-label">关于</span>
+          </span>
+        </button>
+      </div>
+
+      <!-- 窗格底部 = 设置入口（官方：窗格可含 "an optional entry point for app settings"，
+           且 "FooterMenuItems will be displayed before the Settings item by default" ——
+           也就是说设置入口排在窗格最后，所以这里用 margin-top:auto 顶到底部）。
+           它是"动作"（打开属性面板）而不是导航目的地，所以不参与选中态。 -->
+      <div class="win-splitview-panefooter">
+        <div class="win-splitviewcommand">
+          <button class="win-splitviewcommand-button" data-nav="panel">
+            <span class="win-splitviewcommand-button-content">
+              <span class="win-splitviewcommand-icon" aria-hidden="true"><svg viewBox="0 0 16 16"><use href="#win-navicon-gear"></use></svg></span>
+              <span class="win-splitviewcommand-label">属性面板</span>
+            </span>
+          </button>
+        </div>
+      </div>
+    </nav>
+  </div>
+
+  <div class="win-splitview-contentwrapper">
+  <!-- ═══════ 模块：LeftMinimal 表头 ═══════ 只在有左侧导航时需要；随导航一起删。 -->
+  <!-- 官方 LeftMinimal（≤640px）的表头：固定 52px、停靠在内容区顶部、放菜单按钮 + 当前页标题。
+       官方原文："It has a fixed height of 52 px. Its purpose is to hold the page title of the
+       selected navigation category. The header is docked to the top of the page and acts as a
+       scroll clipping point for the content area." +
+       "The header is visible any time the NavigationView is in Minimal display mode."
+       只在 Minimal 档显示（官方："You may choose to hide the header in other modes"）；
+       菜单按钮在 x=0..48，和其它档里窗格首格的汉堡同位置，跨档时它不会跳。 -->
+  <header class="win-navheader" id="navHeader">
+    <button class="win-splitviewpanetoggle" data-act="nav-toggle"
+            aria-label="主导航" aria-controls="navPane" aria-expanded="false">
+      <span class="bars" aria-hidden="true"></span>
+    </button>
+    <!-- 标题字号走官方斜坡的 subtitle 一档（20/400）。
+         官方只规定表头高 52px、放页标题，没规定字号；最初用的 title 档（24/300）在 52px 表头里
+         比导航项（15px）大太多、显得喧宾夺主，所以降到 subtitle 档 —— 与面板标题「属性」同一档。 -->
+    <h2 class="win-type-subtitle" id="navHeaderTitle">工作台</h2>
+  </header>
+  <div class="win-splitview-content">
+  <!-- 主页面：标题+工具栏=批次1（主要控件要尽早可用），列表=批次2，详情=批次3 -->
+  <!-- data-enter-on-load：打开页面就播一次官方的分批进场（KIT.md 规则 21；脚本与 checker 都靠这个标记）。
+       想改成"首屏静止"就删掉这个属性 —— 那等于放弃这条 KIT 约定，请在页面里写 kit-lint-ignore 说明原因。 -->
+  <section class="page" id="mainPage" aria-label="主页面" data-enter-on-load>
+    <!-- 大标题独占批次 1；其余区域依次顺延（官方 enterPage 的分区由应用自己定） -->
+    <h1 class="win-type-subheader" data-batch="1">工具名</h1>
+    <p class="sub win-type-caption" data-batch="2">一句话说明这个工具做什么 · 全部动画取自微软官方 WinJS 参数</p>
+
+
+    <div class="toolbar win-controls">
+      <button class="win-button win-button-primary" data-act="add">新增</button>
+      <button class="win-button" data-act="reposition">重排</button>
+      <button class="win-button" data-act="popup">更多操作</button>
+      <button class="win-button" data-act="showEdge">应用栏</button>
+    </div>
+
+    <div class="workbench">
+      <div class="list" id="list" data-batch="3"></div>
+      <div class="detail" data-batch="4"><div class="detail-body" id="detailBody"></div></div>
+    </div>
+  </section>
+
+  <section class="page back" id="aboutPage" aria-label="关于页">
+    <h1 class="win-type-subheader" data-batch="1">关于</h1>
+    <p class="sub win-type-caption" data-batch="2">第二页用来演示页面转场</p>
+    <p class="hint win-type-caption" data-batch="3">进场 = 该转场的官方动画（框架）+ enterPage 分批内容（区域从右往左滑）</p>
+    <!-- 控件不参与分批滑入（KIT.md 规则 15）：官方对按钮用 fadeIn -->
+    <p class="page-actions win-controls"><button class="win-button" data-act="back">← 返回</button></p>
+  </section>
+
+
+  </div>
+  </div>
+
+  <!-- 应用级浮层（AppBar / 边栏 / 弹出菜单）挂在 SplitView 下、**不在 .win-splitview-content 里**：
+       内容层自成层叠上下文（防页面盖住 Minimal 表头），谁在里面 z-index 再大也压不过表头 ——
+       而这三样是应用外壳，本来就不属于"页面内容"。 -->
+  <!-- ═══════ 模块：应用栏 AppBar ═══════ 没有跨面板命令就整块删。
+       删掉后：工具栏里的「应用栏」按钮、右键唤出都自动失效（appbar 为 null），不会报错。 -->
+  <div id="appbar">
+    <button class="win-command" data-act="hideEdge">关闭应用栏</button>
+    <button class="win-command" data-act="panel">属性面板</button>
+    <button class="win-command" data-act="about">关于（页面转场）</button>
+  </div>
+  <!-- ═══════ 模块：属性面板 ═══════ 没有「需要持续生效的设置」就整块删。
+       删掉后：窗格底部的设置入口与工具栏/应用栏的「属性面板」按钮自动失效。
+       设置项改放工具栏或页面里（控件照抄本块内的官方结构）。 -->
+  <aside id="panel">
+    <!-- 分区：标题独占批次 1，其余文字 + 控件批次 2 → 标题 0ms 先到、其余 83ms 随后。
+         这是**官方允许的分区**：官方《Animating page transitions》原话 "…with staggered timings.
+         You specify how the incoming page is split into regions."（区域划分权在应用），
+         交错用官方参数 staggerDelay(0, 83, 1, 333)。分区用 data-batch，与页面同一套约定（KIT.md 规则 4）。
+         想改回"全部同时进场"（官方 SettingsFlyout 的写法）：去掉两个 data-batch，
+         并把 openPanel 的 content 换成 contentSelector。 -->
+    <div class="win-content" data-batch="1">
+      <h2 class="win-type-subtitle">属性</h2>
+    </div>
+    <div class="win-content" data-batch="2">
+      <p class="win-type-body">面板框架 <code>showPanel</code> 550ms 滑入；内容区域按官方
+         <code>SettingsFlyout._animateSlideIn</code> 逐区域 <code>enterPage</code> 进场。</p>
+      <p class="win-type-body">本模板用一次 <code>A.settingsFlyoutSlideIn()</code> 完成框架 + 内容。</p>
+
+      <!-- 官方控件示例（开关 / 滑块）。官方对这两类控件**没有额外的动画规定**：官方 flyout 里所有东西
+           都在 div.win-content 内、统一按内容进场；不需要像命令条上的按钮那样单独 fadeIn
+           （fadeIn 用于"随命令条出现/消失"的控件：NavBar 箭头、SemanticZoom 缩放钮、FlipView 翻页钮）。
+           结构照官方 WinJS.UI.ToggleSwitch 渲染出来的 DOM：header / values / clickregion > track > thumb，
+           状态用官方类名：win-toggleswitch-on|off|pressed|disabled|dragging。 -->
+      <!-- DOM 结构严格照官方 WinJS.UI.ToggleSwitch 渲染的：
+             header（在上，aria-hidden）→ clickregion（点击区）→ track → **values 在轨道之后、同一 clickregion 内**。
+           官方那条 `.win-toggleswitch-value { margin-left: 12px }` 就是给"文字跟在轨道右边"用的 ——
+           把 values 放到轨道**前面**会变成"文字被缩进 12px、又紧贴轨道"，看着不自然。 -->
+      <div class="win-toggleswitch win-toggleswitch-off" id="demoSwitch" tabindex="0"
+           role="checkbox" aria-checked="false" aria-labelledby="demoSwitchHeader">
+        <div class="win-toggleswitch-header" id="demoSwitchHeader" aria-hidden="true">列表面板跟随选中项</div>
+        <div class="win-toggleswitch-clickregion">
+          <div class="win-toggleswitch-track"><div class="win-toggleswitch-thumb"></div></div>
+          <div class="win-toggleswitch-values" aria-hidden="true">
+            <div class="win-toggleswitch-value win-toggleswitch-value-on">开</div>
+            <div class="win-toggleswitch-value win-toggleswitch-value-off">关</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 复选框：官方固有元素 input[type=checkbox].win-checkbox（20×20、2px 边框、方角）。
+           官方几何给的是 margin: 12px 8px 12px 0 —— 右边那 8px 正是"框与后面文字的距离"，
+           所以官方写法是**框在前、文字在后**，这里照这个顺序写，并用 <label for> 关联
+           （点文字也能勾选；读屏会念"列表行显示删除按钮，复选框"）。
+           复选框官方**没有动画**：状态即时切换（它就是内容本身，不走分批、也不单独 fadeIn）。 -->
+      <div class="demo-check">
+        <input type="checkbox" class="win-checkbox" id="demoCheck" checked>
+        <label class="win-type-body" for="demoCheck">列表行显示删除按钮</label>
+      </div>
+
+      <!-- 官方把滑块当**固有元素**样式化（input[type=range].win-slider），没有 Slider 控件类 -->
+      <label class="win-type-body" for="demoSlider">行高 <span id="demoSliderValue">18</span> px</label>
+      <div><input type="range" class="win-slider" id="demoSlider" min="12" max="40" step="1" value="18"></div>
+
+      <!-- 下拉框：官方固有元素 select.win-dropdown（2px 边框、min-height 32px、方角） -->
+      <label class="win-type-body" for="demoSort">列表排序</label>
+      <div><select class="win-dropdown" id="demoSort">
+        <option value="none">按添加顺序</option>
+        <option value="asc">名称升序</option>
+        <option value="desc">名称降序</option>
+      </select></div>
+
+      <!-- 进度条：官方固有元素 progress.win-progress-bar（180×4；列表占用 = 行数 / 上限） -->
+      <p class="win-type-body" style="margin-bottom:4px">列表占用 <span id="demoProgressValue">3</span> / 10</p>
+      <progress class="win-progress-bar" id="demoProgress" max="10" value="3"></progress>
+    </div>
+
+    <!-- 控件放在内容区域之外：面板内容滑入，按钮用官方 fadeIn -->
+    <div class="panel-actions win-controls"><button class="win-button" data-act="hidePanel">关闭</button></div>
+  </aside>
+
+  <!-- ═══════ 模块：弹出菜单 ═══════ 没有上下文次要动作就整块删。 -->
+  <div id="popup">
+    <div>复制</div><div>重命名</div><div>删除</div>
+  </div>
+</div>
+
+<script src="win8-animations.js"></script>
+<script>
+(function () {
+  'use strict';
+  var A = Win8Anim;
+
+  // 统一的事件委托取值：点击常常落在按钮内部元素上（如图标 span），
+  // 必须用 closest 找到带 data-* 的命令元素，否则命令取不到、按钮表现为"点不动"。
+  function actOf(e, attr) {
+    var key = attr || 'data-act';
+    var el = (e.target && e.target.closest) ? e.target.closest('[' + key + ']') : null;
+    return el ? el.getAttribute(key) : null;
+  }
+
+  /* 顶部状态条已删除 —— 原来它逐条显示"这次跑的是哪条官方动画"。
+     信息不再占界面，改成控制台输出；要做工具时不想看就把 SHOW_ANIM_LOG 关掉即可。
+     模板里所有 status() 调用点都保留原样：它们就是"这段交互对应哪条官方动画"的索引。 */
+  var SHOW_ANIM_LOG = false;
+  function status(text) { if (SHOW_ANIM_LOG) { console.log('[官方动画] ' + text); } }
+
+  // AppBar 的出入场位移 = 自身高度（底部为正；顶部 AppBar 用负数）。官方默认 -70px 是给顶部用的。
+  var APPBAR_OFFSET = { top: '78px', left: '0px' };
+
+  /* ── 页面转场：统一入口（busy 锁 / z-index / 清理出场残留，勿绕过）──────── */
+  var current = 'mainPage';
+  var busy = false;
+  /* 转场进行中又来的请求 —— **插队**（不等当前这次放完）。
+     官方 enterPage 有 1000ms，这个窗口里点导航很容易踩到；原来 `if (busy) return;` 会把点击
+     静默丢掉，而导航高亮/表头标题在点击那一刻就更新了 —— 现象是"关于高亮着、页面还在工作台"。
+     现在的做法分两步，仍然是"同一时刻只有一次转场"（busy 锁的初衷不变）：
+
+       1. 请求存进 `pending`（只留最后一个，连点不会积压）；
+       2. 立刻把**正在跑的页面动画推到终态**（finishPageAnimations）→ 当前那次转场马上结算，
+          排队的请求在同一帧里起跑 —— 用户看到的是"点下去就切"，不用等 1 秒。
+
+     ⚠ 两点容易踩的：
+       - 用 `finish()` 而不是 `cancel()`：cancel 会让动画的 finished 变 reject，
+         `Promise.all([enter, exit])` 就永远不 then，busy 锁会卡死。
+       - 只推页面里的动画（`.page` 子树）：边栏 550ms、应用栏 367ms 那些不归转场管，
+         顺手 finish 掉会变成"边栏还没滑进来就定住了"。
+     代价：被打断的动画是**补完到终态**而不是从半路倒回去，所以会有一帧的补完位移/淡入。
+     这是官方动画的前提 —— 它们的 from 是固定偏移，中途重入本来就该从头重跑。 */
+  var pending = null;
+  var inFlightTo = null;          // 正在切往哪个页面（busy 期间的"当前目标"）
+
+  // 把"页面里正在跑的"动画直接推到终态（其余动画一律不碰）
+  function finishPageAnimations() {
+    if (!document.getAnimations) { return; }
+    document.getAnimations().forEach(function (a) {
+      var t = a.effect && a.effect.target;
+      if (!t || !t.closest || !t.closest('.page')) { return; }
+      try { a.finish(); } catch (e) { /* 无限/延迟动画 finish 会抛，忽略即可 */ }
+    });
+  }
+
+  function transitionTo(id, makeEnter, makeExit, label) {
+    if (busy) {
+      // 连点**同一个键**：目标跟正在切往的那页是同一个 → 什么都不做。
+      // 绝不能在这里 finish：那会把还没放完的进场动画直接拍成最终态（真实反馈：
+      // "连点侧边栏同一个键，未完成的进入动画会直接显示最终状态"）。
+      // 已经插过队（pending 有值）时不能直接返回 —— 那会把用户刚点的那一下丢掉。
+      if (id === inFlightTo && !pending) { return; }
+      pending = { id: id, makeEnter: makeEnter, makeExit: makeExit, label: label };
+      finishPageAnimations();          // 插队：当前转场就地结算，pending 随即起跑
+      return;
+    }
+    if (current === id) { return; }
+    busy = true;
+    inFlightTo = id;
+
+    var from = document.getElementById(current);
+    var to = document.getElementById(id);
+
+    to.className = 'page';
+    to.style.zIndex = 2;
+    // KIT.md 规则 11：出场动画会把整页 opacity 落到 0，分批进场只动画页内区域，
+    // 不清掉这个残留就会整页不可见（黑屏）。
+    to.style.opacity = '';
+    to.style.transform = '';
+    from.style.zIndex = 1;
+
+    // 控件（工具栏/操作按钮）不跟内容滑入，统一用官方 fadeIn —— 见 KIT.md 规则 15
+    [].slice.call(to.querySelectorAll('.win-controls')).forEach(function (c) { A.fadeIn(c); });
+
+    var enter = makeEnter(to, from);
+    var exit = makeExit ? makeExit(from, to) : Promise.resolve();
+
+    Promise.all([enter, exit]).then(function () {
+      from.className = 'page back';
+      from.style.transform = '';
+      from.style.opacity = '';        // 出场页已在屏幕外，残留一并清掉
+      current = id;
+      busy = false;
+      inFlightTo = null;
+      if (label) { status(label); }
+      // 动画刚放完：如果期间有被排队的点击，立刻续上（只跑最后一个）
+      var next = pending;
+      pending = null;
+      if (next) { transitionTo(next.id, next.makeEnter, next.makeExit, next.label); }
+    });
+  }
+
+  /* ── 内容分批进场：官方 enterPage 的"嵌套数组顶层 = 批次" ────────────────── */
+  // 水平偏移取官方 SettingsFlyout 的值（±100px）；官方文档另外建议"非必要就用默认偏移（下移 28px）"
+  var STAGGER_SLIDE = 100;
+  function contentOffset(backwards) {
+    return { top: '0px', left: (backwards ? -STAGGER_SLIDE : STAGGER_SLIDE) + 'px' };
+  }
+
+  // 按 data-batch 收集页面区域 → 嵌套数组（顶层即批次）
+  function pageBatches(page) {
+    var groups = {};
+    [].slice.call(page.querySelectorAll('[data-batch]')).forEach(function (el) {
+      var key = el.getAttribute('data-batch');
+      (groups[key] = groups[key] || []).push(el);
+    });
+    return Object.keys(groups).sort().map(function (k) { return groups[k]; });
+  }
+
+  function enterBatched(to, backwards) {
+    var batches = pageBatches(to);
+    return batches.length ? A.enterPage(batches, contentOffset(backwards)) : null;
+  }
+
+  /* ── 业务：任务列表 + 详情 ─────────────────────────────────────────────── */
+  var appbar = document.getElementById('appbar');
+
+  var listEl = document.getElementById('list');
+  var detailEl = document.getElementById('detailBody');   // 动画作用于内容层，容器不动
+  var seq = 0;
+  var active = null;
+
+  function makeRow(text) {
+    var row = document.createElement('div');
+    row.className = 'row';
+    row.dataset.title = text;
+    row.innerHTML = '<span class="win-type-body"></span>';
+    row.firstChild.textContent = text;
+
+    var del = document.createElement('button');
+    del.className = 'win-command';      // 行内动作是「命令」，不是按钮
+    del.textContent = '删除';
+    del.addEventListener('click', function (e) { e.stopPropagation(); removeRow(row); });
+    row.appendChild(del);
+    // 属性面板里那个勾选框关着时，新加的行也不该冒出删除按钮
+    if (!rowActionsVisible) { del.style.display = 'none'; }
+
+    row.addEventListener('click', function () { selectRow(row); });
+    return row;
+  }
+
+  // 官方 FLIP 三段式：先建动画对象（此刻记录位置）→ 改 DOM → execute()
+  function addRow() {
+    var row = makeRow('任务 ' + (++seq));
+    var existing = [].slice.call(listEl.children);
+    var anim = A.createAddToListAnimation([row], existing);
+    listEl.insertBefore(row, listEl.firstChild);
+    anim.execute();
+    if (typeof renderProgress === 'function') { renderProgress(); }
+    status('createAddToListAnimation · 120ms 新增 + 其余项 400ms 归位');
+  }
+
+  function removeRow(row) {
+    var remaining = [].slice.call(listEl.children).filter(function (r) { return r !== row; });
+    var anim = A.createDeleteFromListAnimation([row], remaining);
+    row.remove();
+    anim.execute();
+    if (active === row) { active = null; renderDetail(); }
+    if (typeof renderProgress === 'function') { renderProgress(); }
+    status('createDeleteFromListAnimation · 120ms 删除 + 其余项 400ms 归位');
+  }
+
+  function reposition() {
+    var rows = [].slice.call(listEl.children);
+    if (rows.length < 2) { return; }
+    var anim = A.createRepositionAnimation(rows);
+    rows.slice().reverse().forEach(function (r) { listEl.appendChild(r); });
+    anim.execute();
+    status('createRepositionAnimation · 367ms 归位，交错 min(33×i, 250)');
+  }
+
+  function selectRow(row) {
+    active = row;
+    [].slice.call(listEl.children).forEach(function (r) { r.classList.toggle('active', r === row); });
+    // 页内换内容：官方 enterContent（550ms 位移 + 170ms 淡入）
+    A.exitContent(detailEl).then(function () {
+      renderDetail();
+      A.enterContent(detailEl);
+      status('enterContent / exitContent · 换详情内容');
+    });
+  }
+
+  function renderDetail() {
+    detailEl.innerHTML = active
+      ? '<h2 class="win-type-subtitle"></h2><dl><dt class="win-type-caption">状态</dt><dd class="win-type-body">进行中</dd>' +
+        '<dt class="win-type-caption">说明</dt><dd class="win-type-body">内容由 enterContent 换入（容器不动，动画在内容层）。</dd></dl>'
+      : '<h2 class="win-type-subtitle">未选择</h2><p class="sub win-type-caption">点击左侧列表项查看详情。</p>';
+    if (active) { detailEl.querySelector('h2').textContent = active.dataset.title; }
+  }
+
+  var toolbarEl = document.querySelector('.toolbar');
+  if (toolbarEl) toolbarEl.addEventListener('click', function (e) {
+    var act = actOf(e);
+    if (act === 'add') { addRow(); }
+    if (act === 'reposition') { reposition(); }
+    if (act === 'popup') { togglePopup(); }
+    if (act === 'showEdge') { showAppBar('工具栏按钮'); }
+  });
+
+  /* ── 应用栏：显示/收起（官方行为：点其他任意位置收起）───────────────────── */
+  var appbarOpen = false;
+  function showAppBar(where) {
+    if (!appbar) { return; }                  // 模块「应用栏」已删 → 自动跳过
+    A.showEdgeUI(appbar, APPBAR_OFFSET);
+    appbarOpen = true;
+    status('showEdgeUI · ' + where + '（点其他任意位置收起）');
+  }
+  function hideAppBar() {
+    if (!appbar) { return; }
+    if (!appbarOpen) { return; }
+    appbarOpen = false;
+    A.hideEdgeUI(appbar, APPBAR_OFFSET);
+    status('hideEdgeUI · 已收起');
+  }
+
+  /* ── 左侧导航：官方 SplitView 的开合数值 ─────────────────────────────────
+     展开 320px、收起 48px（官方折叠宽度就是 48px 图标条，见 KIT.md 第 18 条）；
+     前 30% 的尺寸变化瞬时完成、其余 70% 才做动画 —— 官方 _SplitView.ts 的 animationOffsetFactor。
+     动画本身是"宽度变化错觉"：clipper 与 pane 反向平移（官方 Animations._resizeTransition）。 */
+  var navWrapper = document.getElementById('navWrapper');
+  var navPane = document.getElementById('navPane');
+  var stage = document.getElementById('stage');
+  var NAV_SHOWN = 320, NAV_HIDDEN = 48, NAV_SKIP = 0.3;   // 官方：展开 320px、折叠 48px（图标条）
+  var navOpen = false;
+
+  /* ── 自适应断点（NavigationView PaneDisplayMode 默认 Auto 的行为）──────────
+       ≥NAV_WIDE      Left         窗格固定展开、与内容并排、不可收起（汉堡隐藏）
+       NAV_COMPACT~    LeftCompact  48px 图标条；展开时**覆盖**内容（官方原文 "overlays the content"）
+       ≤640           LeftMinimal  窗格整个收起，只剩内容区 52px 表头里的菜单按钮；展开时浮层盖内容
+     官方默认阈值 = CompactModeThresholdWidth 641 / ExpandedModeThresholdWidth 1008，
+     出处：learn.microsoft.com/windows/apps/design/controls/navigationview（Adaptive behavior → Default）。
+     ⚠ 本模板**把 Left/LeftCompact 的分界调高了**（1008 → 1280）：窗口不到 1280px 就一直用图标条，
+       不再过早固定展开；官方文档明确说这两个阈值是属性、**可以改**（"You can modify these values to
+       customize the adaptive display mode behavior."），所以这是官方允许的自定义、不是偏离。
+       想改回官方默认：把 NAV_WIDE 改回 1008（只此一处）。641 这一档保持官方默认未动。 */
+  var NAV_WIDE = 1280, NAV_COMPACT = 641;   // ← Left / LeftCompact 分界（官方默认 1008，本模板 1280）
+  var NAV_POLL = 250;          // 兜底轮询间隔（见下方注释）
+  var navBandCur = null;       // 'left' | 'compact' | 'minimal'；null = 首屏还没算过
+  var navPinned = false;       // 官方 Left 档（固定展开、不可收起）
+  var navMinimal = false;      // 官方 LeftMinimal 档（收起时可见宽度 0）
+
+  function navBand() {
+    var w = window.innerWidth;
+    if (w >= NAV_WIDE) { return 'left'; }
+    if (w >= NAV_COMPACT) { return 'compact'; }
+    return 'minimal';
+  }
+  // 收起时的可见宽度：图标条 48px，或 Minimal 档彻底收掉（0）
+  function navHidden() { return navMinimal ? 0 : NAV_HIDDEN; }
+  // 窗格当前"露出来"的宽度：展开 = 320，折叠 = navHidden()（图标条 48 / Minimal 档 0）
+  function navVisibleWidth() { return navOpen ? NAV_SHOWN : navHidden(); }
+
+  // 折叠态的终态 = 官方数学算出来的终点：clipper 左移 (320-48)=272、pane 右移 272，
+  // 于是透过 clipper 只能看到最左 48px —— 正好是指标条（图标 x∈[16,32]，文字从 x=48 起被裁掉）。
+  // 必须在首屏就写上，否则菜单会以展开姿态盖在内容上。
+  function navEndShift(open) {
+    return NAV_SHOWN - (open ? NAV_SHOWN : navHidden());   // actualSize - to
+  }
+  function applyNavState(open) {
+    var shift = navEndShift(open);
+    navWrapper.style.transform = 'translateX(' + (-shift) + 'px)';
+    navPane.style.transform = 'translateX(' + shift + 'px)';
+  }
+
+  function setNav(open, instant) {
+    if (!navPane) { return; }                 // 模块「左侧导航」已删 → 自动跳过
+    if (open === navOpen) { return Promise.resolve(); }
+    navOpen = open;
+    // 图标条态里图标是看得见、要能点的，所以**不**加 inert；
+    // 只有 Minimal 档收起来时窗格是 0 宽裁剪区，里面的按钮看不见却还能被 Tab 到 → 那时才 inert。
+    syncNavInert();
+    // 官方 _SplitViewPaneToggle 就是这么同步 ARIA 的；汉堡有两个位置（窗格表头行 / Minimal 表头）
+    syncNavToggleAria();
+    // instant：首屏摆姿态用，不做动画（避免从展开态闪一下再收起）
+    if (instant) { applyNavState(open); return Promise.resolve(); }
+    var hidden = navHidden();
+    var from = open
+      ? hidden + NAV_SKIP * (NAV_SHOWN - hidden)
+      : NAV_SHOWN - NAV_SKIP * (NAV_SHOWN - hidden);
+    var to = open ? NAV_SHOWN : hidden;
+    status(open ? 'resizeTransition · 320px（前 30% 瞬时）' : 'resizeTransition · 收起');
+    return A.resizeTransition(navWrapper, navPane, {
+      from: from, to: to, actualSize: NAV_SHOWN, dimension: 'width', anchorTrailingEdge: false
+    });
+  }
+
+  /* 窗格完全不可见时（Minimal 档收起）必须 inert：
+     否则 Tab 会落在 0 宽裁剪区里那些**看不见**的导航按钮上 ——
+     官方 Minimal 档的原话是 "Only the menu button is shown"，其它东西连焦点都不该有。
+     可见的图标条态不加 inert（图标要能点）。 */
+  function syncNavInert() {
+    if (!navPane) { return; }
+    if (!navPane || !navPane.toggleAttribute) { return; }
+    navPane.toggleAttribute('inert', navMinimal && !navOpen);
+  }
+
+  function syncNavToggleAria() {
+    var toggles = document.querySelectorAll('[data-act="nav-toggle"]');
+    for (var i = 0; i < toggles.length; i++) {
+      toggles[i].setAttribute('aria-expanded', navOpen ? 'true' : 'false');
+    }
+  }
+
+  /* 官方自适应：**只在跨过档位时**套用官方默认值，同一档内保留用户的手动开合
+     （否则每拖动一次窗口都会把用户刚收起的菜单又弹开）。 */
+  function applyAdaptiveNav(instant) {
+    if (!navPane) { return; }                 // 断点逻辑只对窗格有意义
+    var band = navBand();
+    if (band === navBandCur) { return; }
+    navBandCur = band;
+    navPinned = (band === 'left');
+    navMinimal = (band === 'minimal');
+    if (stage) {
+      stage.classList.toggle('nav-pinned', navPinned);
+      stage.classList.toggle('nav-minimal', navMinimal);
+      if (!instant) { stage.classList.add('nav-anim'); }   // 只有真的跨档才启用内容过渡
+    }
+    if (navPinned !== navOpen) {
+      setNav(navPinned, instant);      // Left 档固定展开，其余档收起（走官方开合动画）
+    } else {
+      // 开合状态没变、但收起宽度变了（图标条 48 ↔ Minimal 0）→ 立刻重摆几何，
+      // 顺带刷新 inert（48px 图标条要能点，0 宽裁剪区不能进焦点）
+      applyNavState(navOpen);
+      syncNavInert();
+    }
+    if (!instant) {
+      var label = { left: 'Left 固定展开', compact: 'LeftCompact 图标条', minimal: 'LeftMinimal 表头菜单按钮' }[band];
+      status('自适应断点 ' + NAV_WIDE + '/' + NAV_COMPACT + 'px · ' + label);
+    }
+  }
+
+  applyAdaptiveNav(true);   // 首屏：按当前宽度直接摆到正确姿态（不做动画）
+  syncNavInert();           // 首屏若落在 Minimal 档（窄窗口），窗格要立刻 inert
+  window.addEventListener('resize', function () { applyAdaptiveNav(false); });
+  /* 兜底：resize / matchMedia 的 change / ResizeObserver 全都是**帧驱动**的 ——
+     窗口被遮挡或标签页不渲染时一个都不会派发（自动化环境实测：文档不渲染时三者全哑，
+     而 innerWidth 与 matchMedia.matches 的读数一直是对的）。所以再加一道低频轮询，
+     只读宽度、状态没变就立刻返回，成本约等于零。思路同本库 whenDone() 的挂钟兜底：
+     不依赖"会不会渲染"，只依赖读数。 */
+  setInterval(function () { applyAdaptiveNav(false); }, NAV_POLL);
+
+
+  /* 官方表头里的页标题 = 当前导航类的名字（不手写第二份文案，直接从导航项标签取） */
+  var navHeaderTitle = document.getElementById('navHeaderTitle');
+  function navLabelOf(target) {
+    if (!navPane) { return ''; }              // 没有窗格就没有导航项标签
+    var btn = document.querySelector('[data-nav="' + target + '"]');
+    var lbl = btn && btn.querySelector('.win-splitviewcommand-label');
+    return lbl ? lbl.textContent : null;
+  }
+  function setPageTitle(text) {
+    if (navHeaderTitle && text) { navHeaderTitle.textContent = text; }
+  }
+
+  /* 选中态：官方 WinUI —— "Selected items will draw their selection indicators along their left edge
+     when in left mode"。选中态只用 aria-current="page" 表达（样式见 win8-controls.css：
+     `[aria-current="page"]::after` 是左缘 2px 指示条），一份状态同时给无障碍和样式用。
+     只有"页面目的地"参与选中；窗格底部的属性面板是动作（开面板），不参与。 */
+  function setNavSelected(target) {
+    if (!navPane) { return; }
+    var buttons = document.querySelectorAll('[data-nav]');
+    for (var i = 0; i < buttons.length; i++) {
+      var isCurrent = buttons[i].getAttribute('data-nav') === target;
+      if (isCurrent) { buttons[i].setAttribute('aria-current', 'page'); }
+      else { buttons[i].removeAttribute('aria-current'); }
+    }
+  }
+
+  if (navPane) navPane.addEventListener('click', function (e) {
+    var target = actOf(e, 'data-nav');
+    if (!target) { return; }
+    // 固定展开档（官方 Left）窗格与内容并排常驻，点导航项不收起；
+    // 图标条 / Minimal 档展开时都是覆盖内容（官方 LeftCompact "overlays the content"），点完就收
+    if (!navPinned) { setNav(false); }
+    // 底部设置入口是**动作**（开关边栏），不是导航目的地：
+    // 既不改选中态，也不该改表头的页标题 —— 三者只在真正切页时才一起动
+    if (target === 'panel') { togglePanel(); return; }
+    setPageTitle(navLabelOf(target));                      // 官方：表头放"当前导航类的页标题"
+    setNavSelected(target);
+    transitionTo(target,
+      function (to) { return enterBatched(to, false); },
+      function (from) { return A.exitContent(from); },
+      '导航切换 · ' + target);
+  });
+
+  /* 汉堡按钮有两个位置 —— 窗格表头行（LeftCompact 图标条首格）与 Minimal 档的 52px 表头。
+     在 document 上统一委托，省得两处各挂一份（也避免两处都响应变成"点一下开又关"）。 */
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest) { return; }
+    if (e.target.closest('[data-act="nav-toggle"]')) { setNav(!navOpen); }
+  });
+
+  setPageTitle(navLabelOf('mainPage'));    // 首屏：表头页标题
+  setNavSelected('mainPage');              // 首屏：选中工作台（标记已在标记里，这里保证一致）
+
+  /* ── 边栏（面板）：框架 + 分批内容，一次调用 ───────────────────────────── */
+  var panelEl = document.getElementById('panel');
+  var panelOpen = false;
+  function openPanel() {
+    if (!panelEl) { return; }                 // 模块「属性面板」已删 → 自动跳过
+    if (panelOpen) { return; }            // 防重入：已经在开/开着就别再放一遍进场动画
+    // 标题先到、其余随后 —— 用**嵌套数组**显式分批（官方 enterPage 的批次语义：顶层每个元素 = 一个批次）。
+    // 分区取自面板内的 data-batch，和页面同一套约定（KIT.md 规则 4）：
+    //   批次 1（标题）→ 0ms，批次 2（其余文字 + 控件）→ 83ms（官方 staggerDelay 参数）。
+    // 官方允许这么划：`Animating page transitions` 原文 "…with staggered timings.
+    //   You specify how the incoming page is split into regions."（区域划分权在应用）。
+    // 想改回官方 SettingsFlyout 的"逐区域同时进场"：去掉面板里的 data-batch，
+    //   这里就会自动退回 contentSelector（下面这个兜底分支）。
+    var panelBatches = pageBatches(panelEl);
+    A.settingsFlyoutSlideIn(panelEl, null, panelBatches.length
+      ? { content: panelBatches }
+      : { contentSelector: '.win-content' });
+    A.fadeIn(panelEl.querySelector('.panel-actions'));   // 控件：官方 fadeIn，不跟内容一起滑
+    panelOpen = true;
+    status('settingsFlyoutSlideIn · 框架 550ms + 内容分批');
+  }
+  function hidePanel() {
+    if (!panelEl) { return; }
+    if (!panelOpen) { return; }
+    panelOpen = false;
+    A.hidePanel(panelEl);                 // 官方 hidePanel：只滑框架，无内容退场
+    status('hidePanel · 550ms');
+  }
+  /* 边栏入口 = **开关**（不是"只开"）：反复点同一个按钮应当在开/关之间切换。
+     原来调的是 openPanel()，而 openPanel 又没有防重入 ——
+     再加上 light-dismiss 只排除了 [data-act="panel"]、没排除下面这个 [data-nav="panel"]，
+     于是"pointerdown 先关掉、click 又开一遍"，看起来就是进入动画在反复播放。 */
+  function togglePanel() { panelOpen ? hidePanel() : openPanel(); }
+
+  /* ── 弹出菜单：常驻显示，点空白处关闭 ──────────────────────────────────── */
+  var popupEl = document.getElementById('popup');
+  var popupOpen = false;
+
+  function showPopup() {
+    if (!popupEl) { return; }                 // 模块「弹出菜单」已删 → 自动跳过
+    popupEl.classList.add('open');
+    popupEl.style.opacity = '0';
+    A.showPopup(popupEl);
+    popupOpen = true;
+    status('showPopup · 位移 367ms + 淡入 83ms（延迟 83ms）');
+  }
+  function hidePopup() {
+    if (!popupEl) { return; }
+    if (!popupOpen) { return; }
+    popupOpen = false;
+    A.hidePopup(popupEl).then(function () { popupEl.classList.remove('open'); });
+    status('hidePopup · 83ms linear');
+  }
+  function togglePopup() { popupOpen ? hidePopup() : showPopup(); }
+
+  // 官方 light-dismiss：点其他任意位置收起浮层（点它自己或触发它的控件不算）
+  document.addEventListener('pointerdown', function (e) {
+    if (!e.target.closest) { return; }
+    if (popupOpen && !e.target.closest('#popup') && !e.target.closest('[data-act="popup"]')) { hidePopup(); }
+    if (appbarOpen && !e.target.closest('#appbar') && !e.target.closest('[data-act="showEdge"]')) { hideAppBar(); }
+    // 注意要把窗格底部的开关（[data-nav="panel"]）也排除掉：
+    // 否则 pointerdown 会先把它关掉、紧接着 click 又开一遍 = 进入动画反复播放
+    if (panelOpen && !e.target.closest('#panel') &&
+        !e.target.closest('[data-act="panel"], [data-nav="panel"]')) { hidePanel(); }
+    // 导航：官方 SplitView 的 lightDismiss —— 只有"可收起"的图标条档才点内容区收起；
+    // 固定展开档（官方 Left，≥1008px）窗格与内容并排常驻，点哪里都不该把它收掉
+    if (navOpen && !navPinned && !e.target.closest('#navPane') && !e.target.closest('[data-act="nav-toggle"]')) { setNav(false); }
+  });
+
+  // 官方：窗格以浮层/可收起形态打开时 Escape 关闭它（固定展开档不响应 —— 它没有可关闭的状态）
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && navOpen && !navPinned) { setNav(false); }
+  });
+
+  /* ── AppBar / 面板 / 关于页 ────────────────────────────────────────────── */
+  if (appbar) appbar.addEventListener('click', function (e) {
+    var act = actOf(e);
+    if (act === 'hideEdge') { hideAppBar(); }
+    if (act === 'panel') { togglePanel(); }
+    if (act === 'about') {
+      setPageTitle(navLabelOf('aboutPage'));
+      setNavSelected('aboutPage');            // 走的是转场，选中态要跟着走
+      transitionTo('aboutPage',
+        function (to) { return enterBatched(to, false); },
+        function (from) { return A.exitContent(from); },
+        '转场 + 分批进场（从右往左滑）');
+    }
+  });
+
+  if (panelEl) panelEl.addEventListener('click', function (e) {
+    if (actOf(e) === 'hidePanel') {
+      hidePanel();
+    }
+  });
+
+  /* ── 官方控件示例：开关（ToggleSwitch）与滑块（Slider）的接线 ──────────────
+     官方 ToggleSwitch 的状态就是那几个类名：on/off + pressed（按下中）+ dragging（拖拽中，
+     拖拽时去掉滑块过渡）。滑块的位移过渡是官方的 `transition: left 0.1s`（写在 CSS 里，不用 JS）。
+     这里只做"点击切换 + 按下态"，官方还支持拖动滑块换值，本例没做（要做就加 dragging 类）。 */
+  var demoSwitch = document.getElementById('demoSwitch');
+  if (demoSwitch) {
+    var switchOn = function () { return demoSwitch.classList.contains('win-toggleswitch-on'); };
+    var renderSwitch = function (on) {
+      demoSwitch.classList.toggle('win-toggleswitch-on', on);
+      demoSwitch.classList.toggle('win-toggleswitch-off', !on);
+      demoSwitch.setAttribute('aria-checked', on ? 'true' : 'false');
+    };
+    renderSwitch(false);
+    demoSwitch.addEventListener('pointerdown', function () { demoSwitch.classList.add('win-toggleswitch-pressed'); });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (t) {
+      demoSwitch.addEventListener(t, function () { demoSwitch.classList.remove('win-toggleswitch-pressed'); });
+    });
+    demoSwitch.addEventListener('click', function () { renderSwitch(!switchOn()); });
+    demoSwitch.addEventListener('keydown', function (e) {         // 键盘：空格/回车
+      if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); renderSwitch(!switchOn()); }
+    });
+  }
+
+  var demoSlider = document.getElementById('demoSlider');
+  var demoSliderValue = document.getElementById('demoSliderValue');
+  if (demoSlider && demoSliderValue) {
+    demoSlider.addEventListener('input', function () { demoSliderValue.textContent = demoSlider.value; });
+  }
+
+  /* 下拉框（官方固有元素 select.win-dropdown）：选排序方式就真的给列表排序 */
+  var demoSort = document.getElementById('demoSort');
+  if (demoSort) {
+    demoSort.addEventListener('change', function () {
+      var rows = [].slice.call(listEl.children);
+      if (demoSort.value === 'none') { return; }                 // 原始顺序不再记，这里只做升/降序
+      rows.sort(function (a, b) {
+        var x = (a.dataset.title || ''), y = (b.dataset.title || '');
+        return demoSort.value === 'asc' ? x.localeCompare(y, 'zh') : y.localeCompare(x, 'zh');
+      });
+      /* 官方 FLIP 三段式：**先**建动画对象（此刻记录位置）→ 再按新顺序改 DOM → execute()。
+         原来这里调的是页面自己的 reposition() —— 那个函数是"把列表整个翻过来"的演示，
+         它会把刚排好的顺序再倒一遍，等于排序没生效（实测：选"名称升序"结果仍是 4,3,2,1）。
+         重排动画本身要继续用它，排序这里只借用官方的创建/执行两段。 */
+      var anim = A.createRepositionAnimation(rows);
+      rows.forEach(function (r) { listEl.appendChild(r); });
+      anim.execute();
+      status('列表排序 · ' + demoSort.selectedOptions[0].textContent + ' · createRepositionAnimation 367ms');
+    });
+  }
+
+  /* 复选框（官方固有元素 input[type=checkbox].win-checkbox）：勾选/取消决定行内删除按钮显不显示。
+     官方对"随命令条出现/消失的**控件**"给的动画是 fadeIn / fadeOut（同 NavBar 箭头、FlipView 翻页钮、
+     对话框根节点、提示气泡）—— 所以这里不去动内容分批，只做 250ms 淡入 / 167ms 淡出。 */
+  var demoCheck = document.getElementById('demoCheck');
+  var rowActionsVisible = true;      // 行内删除按钮是否显示（makeRow 建新行时也要看它）
+  var rowActionToken = 0;            // 连点保护：过期的 fadeOut 回调不许再改显示状态
+  function rowActionButtons() { return [].slice.call(listEl.querySelectorAll('.win-command')); }
+  function setRowActions(visible, animate) {
+    rowActionsVisible = visible;
+    var btns = rowActionButtons();
+    var token = ++rowActionToken;
+    if (!btns.length) { return; }
+    if (visible) {
+      btns.forEach(function (b) { b.style.display = ''; });
+      if (animate) { A.fadeIn(btns); status('fadeIn · 250ms（控件随勾选出现）'); }
+    } else if (!animate) {
+      btns.forEach(function (b) { b.style.display = 'none'; });
+    } else {
+      A.fadeOut(btns).then(function () {
+        if (token === rowActionToken) { btns.forEach(function (b) { b.style.display = 'none'; }); }
+      });
+      status('fadeOut · 167ms（控件随取消勾选消失）');
+    }
+  }
+  if (demoCheck) {
+    demoCheck.addEventListener('change', function () { setRowActions(demoCheck.checked, true); });
+  }
+
+  /* 进度条（官方固有元素 progress.win-progress-bar）：列表占用 = 行数 / 上限 */
+  var demoProgress = document.getElementById('demoProgress');
+  var demoProgressValue = document.getElementById('demoProgressValue');
+  function renderProgress() {
+    if (!demoProgress) { return; }
+    var n = listEl.children.length;
+    demoProgress.value = Math.min(n, Number(demoProgress.max));
+    if (demoProgressValue) { demoProgressValue.textContent = n; }
+  }
+  renderProgress();
+
+  /* 这里原来挂着"提示气泡（.win-tooltip，图标条档悬停显示导航项名字）"，已按用户要求删除：
+     模板不再需要 .win-tooltip，win8-controls.css 里那一块也随之移除（KIT.md 规则 19 留了还原路径）。
+     图标条档下导航项的可访问名字仍在按钮上（图标是 aria-hidden 的装饰，文字只是被 CSS 裁掉），
+     所以读屏与键盘仍能拿到"工作台/关于/属性面板"。 */
+
+  var aboutPageEl = document.getElementById('aboutPage');   // 单页工具没有第二页
+  if (aboutPageEl) aboutPageEl.addEventListener('click', function (e) {
+    if (actOf(e) === 'back') {
+      setPageTitle(navLabelOf('mainPage'));
+      setNavSelected('mainPage');
+      transitionTo('mainPage',
+        function (to) { return enterBatched(to, true); },
+        function (from) { return A.exitContent(from); },
+        '返回 + 分批进场');
+    }
+  });
+
+  // 官方 Win8 约定：右键唤出应用栏（AppBar 初始停在屏幕外，必须有个入口把它调出来）
+  document.addEventListener('contextmenu', function (e) {
+    e.preventDefault();
+    showAppBar('右键唤出');
+  });
+
+  /* ── 初始内容 ──────────────────────────────────────────────────────────── */
+  ['任务 1', '任务 2', '任务 3'].forEach(function (t) { listEl.appendChild(makeRow(t)); seq++; });
+  renderDetail();
+
+  /* ── 首屏入场（KIT.md 规则 20）：打开页面就播一次官方分批进场 ─────────────
+     偏移用 **`contentOffset(false)` —— 从右往左滑 100px**，与页面转场同一套（用户要求首屏也走横向）。
+     官方 `enterPage` 的默认偏移是"下移 28px → 0"；要退回官方默认，把第二个参数去掉即可。
+     分批参数也是与转场完全同一套（位移 1000ms + 淡入 170ms，交错 min(83×i, 333)）。
+     **不经过 transitionTo**：没有出场页，也不该给页面挂 z-index
+     （页面挂上 z-index 会盖住 Minimal 表头那条 52px，见 KIT.md 规则 18）。
+     库会自动尊重 prefers-reduced-motion / A.enabled=false（那时直接落终态）。 */
+  var bootPage = document.querySelector('.page[data-enter-on-load]');
+  if (bootPage) {
+    var bootBatches = pageBatches(bootPage);
+    if (bootBatches.length) { A.enterPage(bootBatches, contentOffset(false)); }
+    A.fadeIn(bootPage.querySelectorAll('.win-controls'));   // 控件仍走官方 fadeIn，不跟内容一起滑
+    status('首屏入场 · enterPage 分批 0/83/166/249ms（从右往左滑 ' + STAGGER_SLIDE + 'px）+ 控件 fadeIn');
+  }
+})();
+</script>
+</body>
+</html>

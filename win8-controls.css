@@ -1,0 +1,626 @@
+/*!
+ * win8-controls.css — WinJS 官方固有控件样式（按钮 / 输入框 / 复选框 / 链接 / 字体斜坡）
+ *
+ * 数值逐条取自微软 MIT 许可的 WinJS 源码，未做主观调整：
+ *   src/less/styles-intrinsic.less  结构（尺寸/边框/圆角/内边距）
+ *   src/less/colors-intrinsic.less  各状态配色（rest / hover / active / disabled）
+ *   src/less/color-definitions.less 颜色变量（dark 主题为默认）
+ *   src/less/font-definitions.less  字体与字号斜坡
+ *
+ * 暗色主题变量（官方 dark 值）：
+ *   baseHigh #fff · baseLow rgba(255,255,255,.2) · baseMediumMid rgba(255,255,255,.4)
+ *   baseMid rgba(255,255,255,.6) · baseMediumHigh rgba(255,255,255,.8) · altMediumMid rgba(0,0,0,.4)
+ * 浅色主题：给容器加 .win-light 即可（官方 light 值，§ 见文件末）
+ */
+
+/* 应用强调色 —— 官方规定**由应用/系统提供**，WinJS 的 less 里从不定义它：
+   ToggleSwitch 的 ON 态只写 `border-color: transparent`，把轨道背景留给应用
+   （高对比度分支里那句注释 "Override Accent Color styles" 就是证据）。
+   本库统一用这一个变量：开关 ON 态轨道 + 导航选中态的左缘指示条。
+   默认取 WinUI dark 主题的默认强调色 #60CDFF —— 它是**本库给应用的默认值**，不是 WinJS 的值。
+   ⚠ 不要设成白色：开关 ON 态的白滑块会在白轨道上看不见。 */
+:root { --win-accent: #60cdff; }
+
+/* ── 字体与字号斜坡（官方 font-definitions.less）───────────────────────── */
+@font-face { font-family: "Segoe UI"; font-weight: 200; src: local("Segoe UI Light"); }
+@font-face { font-family: "Segoe UI"; font-weight: 300; src: local("Segoe UI Semilight"); }
+@font-face { font-family: "Segoe UI"; font-weight: 400; src: local("Segoe UI"); }
+@font-face { font-family: "Segoe UI"; font-weight: 500; src: local("Segoe UI Semibold"); }
+@font-face { font-family: "Segoe UI"; font-weight: 600; src: local("Segoe UI Bold"); }
+
+.win-type-header,  .win-h1 { font-size: 46px; font-weight: 200; line-height: 1.216; }
+.win-type-subheader, .win-h2 { font-size: 34px; font-weight: 200; line-height: 1.176; }
+.win-type-title,   .win-h3 { font-size: 24px; font-weight: 300; line-height: 1.167; }
+.win-type-subtitle, .win-h4 { font-size: 20px; font-weight: 400; line-height: 1.2; }
+.win-type-base,    .win-h5 { font-size: 15px; font-weight: 500; line-height: 1.333; }
+.win-type-body,    .win-h6 { font-size: 15px; font-weight: 400; line-height: 1.333; }
+.win-type-caption          { font-size: 12px; font-weight: 400; line-height: 1.167; }
+
+.win-button, .win-textbox, .win-textarea, .win-link,
+.win-type-header, .win-type-subheader, .win-type-title, .win-type-subtitle,
+.win-type-base, .win-type-body, .win-type-caption {
+    font-family: "Segoe UI", sans-serif, "Segoe MDL2 Assets", "Symbols", "Segoe UI Emoji";
+}
+
+/* ── 按钮（官方 styles-intrinsic.less §Button + colors-intrinsic.less §Push button）── */
+.win-button {
+    --win-base-high: #fff;
+    --win-base-low: rgba(255, 255, 255, .2);
+    --win-base-medium-mid: rgba(255, 255, 255, .4);
+
+    /* 结构 */
+    border-style: solid;
+    border-width: 2px;
+    border-radius: 0;               /* 方角 —— Metro 的标志之一 */
+    margin: 0;
+    min-height: 32px;
+    min-width: 120px;
+    padding: 4px 8px;
+    background-clip: border-box;
+    touch-action: manipulation;
+    -webkit-appearance: none;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.333;
+    cursor: pointer;
+
+    /* 配色：静止时边框是「透明」的 —— 不是可见细边！ */
+    color: var(--win-base-high);
+    background-color: var(--win-base-low);
+    border-color: transparent;
+}
+.win-button:hover  { border-color: var(--win-base-medium-mid); }   /* hover 只显边框 */
+.win-button:active { background-color: var(--win-base-medium-mid); } /* 按下才加深底色 */
+.win-button:disabled {
+    color: var(--win-base-low);
+    background-color: var(--win-base-low);
+    border-color: transparent;
+    cursor: default;
+}
+/* 主要动作：官方 .win-button-primary 文字为白，底色用应用强调色 */
+.win-button-primary {
+    --win-accent: #1f6fb2;          /* 应用强调色，按需覆盖 */
+    color: #fff;
+    background-color: var(--win-accent);
+}
+.win-button-primary:hover  { border-color: var(--win-base-medium-mid); }
+.win-button-primary:active { background-color: var(--win-base-medium-mid); }
+.win-button-primary:disabled {
+    color: var(--win-base-low);
+    background-color: var(--win-base-low);
+    border-color: transparent;
+}
+
+/* ── 命令（应用栏命令、列表行内动作）──────────────────────────────────────
+   配色取官方 color-definitions.less 的 @listHover / @listPress；
+   结构按 Win8 应用栏命令复刻：无边框、无底色，hover/press 才出底色。 */
+.win-command {
+    background: none;
+    border: 0;
+    color: #fff;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.333;
+    padding: 6px 12px;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-appearance: none;
+}
+.win-command:hover  { background: rgba(255, 255, 255, .1); }   /* @listHover */
+.win-command:active { background: rgba(255, 255, 255, .2); }   /* @listPress */
+.win-command:disabled { color: rgba(255, 255, 255, .2); background: none; cursor: default; }
+.win-light .win-command:hover  { background: rgba(0, 0, 0, .1); }
+.win-light .win-command:active { background: rgba(0, 0, 0, .2); }
+
+/* ── 输入框（官方 §Text input）──────────────────────────────────────────── */
+.win-textbox, .win-textarea {
+    border-style: solid;
+    border-width: 2px;
+    border-radius: 0;
+    margin: 8px 0;
+    min-width: 64px;
+    min-height: 28px;
+    box-sizing: border-box;
+    padding: 3px 6px 5px 10px;
+    outline: 0;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.333;
+    color: #fff;
+    background-color: rgba(0, 0, 0, .4);   /* 官方 @altMediumMid（dark） */
+    border-color: rgba(255, 255, 255, .4); /* 官方 @baseMediumMid */
+}
+.win-textbox { width: 296px; }
+.win-textarea { resize: none; overflow-y: auto; }
+.win-textbox::placeholder, .win-textarea::placeholder { color: rgba(255, 255, 255, .6); }
+/* hover 官方**底色也变**：@altMid（dark = fade(#000, 60%)）+ 边框 @baseMid */
+.win-textbox:hover, .win-textarea:hover {
+    background-color: rgba(0, 0, 0, .6);
+    border-color: rgba(255, 255, 255, .6);
+}
+/* focus 官方：文字转 @baseBlack #000、底色转 @baseWhite #fff（这两个是与主题无关的常量，
+   Win8 里"输入框一聚焦就变白底黑字"就是这条）；边框 = 应用强调色（IntrinsicControls.js 强调色规则）。
+   焦点提示就是这个白底，所以基础样式里那条 outline: 0 不会让键盘用户失去反馈。 */
+.win-textbox:focus, .win-textarea:focus {
+    color: #000;
+    background-color: #fff;
+    border-color: var(--win-accent);
+}
+.win-textbox:disabled, .win-textarea:disabled {
+    color: rgba(255, 255, 255, .2);
+    border-color: rgba(255, 255, 255, .2);
+    background-color: transparent;
+}
+
+/* ── 复选框 / 单选（官方固有元素 input[type=checkbox|radio].win-checkbox / .win-radio）──
+   几何：src/less/styles-intrinsic.less §Radio and check
+     width/height 20px；margin-right 8px、margin-top 12px、margin-bottom 12px
+     （右边那 8px 正是"框与后面文字的距离" → 官方写法是**框在前、文字在后**）
+     ::-ms-check = display inline-block + border-style solid + border-width 2px + background-clip border-box
+   配色：src/less/colors-intrinsic.less §Radio and Checkbox（dark 主题，括号里是官方 token）
+     静止 color @baseHigh / border-color @baseMediumHigh / 背景 transparent
+     悬停 border-color @baseHigh（官方把这条写在"勾选"之后 → 勾选态悬停会显出一圈白边，照官方顺序）
+     按下 border-color transparent、背景 @baseMid
+     禁用 color/border @baseLow、背景 transparent
+   **勾选态背景 = 应用强调色**：值不在 less 里，出处是
+     src/js/WinJS/Controls/IntrinsicControls.js 的强调色规则
+       `.win-checkbox:checked::-ms-check { background-color: <accent> }`
+     （less 的勾选态只写了 `color: #fff` + `border-color: transparent`，底色留给应用 —— 与开关 ON 态同理）
+   ⚠ 替身清单（这一族官方全靠 IE 的 ::-ms-check 由**系统绘制**，Chromium/Safari 没有这个伪元素）：
+     · 圆角：官方 less 没有 radius 值（系统给）→ 复选框 0、单选 50%
+     · 勾：系统绘制，颜色取官方勾选态 `color: #fff` → 自绘 10×10 白色 SVG 勾
+       （与下拉框箭头同一套替身思路；**不要**再用 Segoe MDL2 的私用区字形画勾 —— 缺字体时是豆腐块）
+     · 半选横杠：系统绘制，颜色取官方半选态 `color: @baseMediumHigh` → 自绘 10×2 横杠，随主题换色
+     · 对齐：官方没写 vertical-align → 本库补 middle，让方框与文字中线对齐
+   ⚠ 单选那个"圆心点"官方 less 里没有值（勾选态只由强调色规则给了 border-color: accent）：
+     本库按"实心强调色圆片"实现；要改成"强调色圆环 + 强调色圆心"只需 :checked 改回
+     border-color: var(--win-accent)、background 改 transparent，再补一个中心点伪元素。
+   ⚠ 顺序按官方源码排：静止 → 半选 → 勾选 → 悬停 → 按下 → 半选按下 → 禁用。 */
+.win-checkbox, .win-radio {
+    width: 20px;
+    height: 20px;
+    margin: 12px 8px 12px 0;
+    border: 2px solid rgba(255, 255, 255, .8);   /* @baseMediumHigh */
+    border-radius: 0;
+    background-color: transparent;
+    color: #fff;                                  /* @baseHigh */
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+    vertical-align: middle;                       /* 本库补充（官方未写） */
+}
+.win-radio { border-radius: 50%; }
+/* 半选：边框 = 强调色（IntrinsicControls.js 的 border-color 规则）+ 系统横杠的替身 */
+.win-checkbox:indeterminate {
+    border-color: var(--win-accent);
+    background-image: linear-gradient(rgba(255, 255, 255, .8), rgba(255, 255, 255, .8));  /* @baseMediumHigh */
+    background-repeat: no-repeat;
+    background-size: 10px 2px;
+    background-position: center;
+}
+/* 勾选：底色 = 强调色（强调色规则）+ 白色勾的替身（官方勾选态 color: #fff） */
+.win-checkbox:checked, .win-radio:checked {
+    border-color: transparent;
+    background-color: var(--win-accent);
+}
+.win-checkbox:checked {
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Cpath d='M1.5 5.5 4 8 8.5 2.5' fill='none' stroke='%23ffffff' stroke-width='2'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+}
+.win-checkbox:hover, .win-radio:hover { border-color: #fff; }                                     /* @baseHigh */
+.win-checkbox:active  { border-color: transparent; background-color: rgba(255, 255, 255, .6); }  /* @baseMid */
+.win-radio:active     { border-color: rgba(255, 255, 255, .6); }                                  /* 单选按下只换边框 */
+.win-checkbox:indeterminate:active { border-color: rgba(255, 255, 255, .8); background-color: transparent; }
+.win-checkbox:disabled, .win-radio:disabled {
+    border-color: rgba(255, 255, 255, .2);       /* @baseLow */
+    background-color: transparent;
+}
+/* 本库补充（同下拉框那条的道理）：`appearance: none` 去掉了原生焦点环，
+   官方在 IE 下靠 ::-ms-check 自带的焦点视觉 —— Web 里得自己给一个。
+   1px dotted @baseHigh 与导航项、下拉框同族；只在键盘操作时出现，鼠标点击不出框。 */
+.win-checkbox:focus-visible, .win-radio:focus-visible { outline: 1px dotted #fff; }
+
+/* ── 链接（官方 §Link + 强调色规则）───────────────────────────────────────
+   styles-intrinsic.less §Link：`text-decoration: underline; cursor: pointer; touch-action: manipulation`
+   颜色 = **应用强调色**（IntrinsicControls.js 强调色规则 `.win-link { color: <accent> }`）
+   colors-intrinsic.less §Link（dark）：hover @baseMid、active @baseMediumMid、disabled @baseLow */
+.win-link {
+    color: var(--win-accent);
+    text-decoration: underline;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+.win-link:hover    { color: rgba(255, 255, 255, .6); }
+.win-link:active   { color: rgba(255, 255, 255, .4); }
+.win-link:disabled { color: rgba(255, 255, 255, .2); }
+
+/* ── 浅色主题：容器加 .win-light（官方 light 值：baseHigh #000 / altHigh #fff）── */
+.win-light .win-button {
+    --win-base-high: #000;
+    --win-base-low: rgba(0, 0, 0, .2);
+    --win-base-medium-mid: rgba(0, 0, 0, .4);
+}
+.win-light .win-textbox, .win-light .win-textarea {
+    color: #000;
+    background-color: rgba(255, 255, 255, .4);
+    border-color: rgba(0, 0, 0, .4);
+}
+.win-light .win-textbox::placeholder, .win-light .win-textarea::placeholder { color: rgba(0, 0, 0, .6); }
+/* 官方 hover/focus 用与主题无关的常量（见上文），浅色下只有 hover 底色 / 边框按 light 值走 */
+.win-light .win-textbox:hover, .win-light .win-textarea:hover {
+    background-color: rgba(255, 255, 255, .6);
+    border-color: rgba(0, 0, 0, .6);
+}
+.win-light .win-checkbox, .win-light .win-radio { border-color: rgba(0, 0, 0, .8); color: #000; }
+.win-light .win-checkbox:hover, .win-light .win-radio:hover { border-color: #000; }
+/* 浅色下 @baseMediumHigh = fade(#000, 80%) → 半选横杠与悬停/按下边框都要跟着换黑 */
+.win-light .win-checkbox:indeterminate {
+    background-image: linear-gradient(rgba(0, 0, 0, .8), rgba(0, 0, 0, .8));
+}
+.win-light .win-checkbox:active { background-color: rgba(0, 0, 0, .6); }
+.win-light .win-radio:active { border-color: rgba(0, 0, 0, .6); }
+.win-light .win-checkbox:indeterminate:active { border-color: rgba(0, 0, 0, .8); background-color: transparent; }
+/* 键盘焦点框在浅色下换成黑（白虚线在白底上看不见）；下拉框是强调色边框，浅色下一样看得见 */
+.win-light .win-checkbox:focus-visible, .win-light .win-radio:focus-visible { outline-color: #000; }
+.win-light .win-link:hover  { color: rgba(0, 0, 0, .6); }
+.win-light .win-link:active { color: rgba(0, 0, 0, .4); }
+
+/* ── 开关（官方 ToggleSwitch）────────────────────────────────────────────
+   几何：src/less/styles-toggleswitch.less
+     轨道 44×20、边框 2px、圆角 10、滑块 ⌀10
+     滑块偏移 = (20 − 2×2 − 10)/2 = 3px；ON 位置 = 44 − 10 − 2 − 10/2 = 27px
+     表头 _win-type-body()、取值文字高 20px（= 轨道高）、取值左距 12px、点击区内距上 5px
+     官方**唯一**一条过渡：滑块 left 0.1s（照抄，曲线官方没给就用默认）
+     拖拽时加 .win-toggleswitch-dragging 去掉过渡（官方原样）
+   配色：src/less/colors-toggleswitch.less（dark 主题，括号里是官方 token）
+     关：轨道边框 + 滑块 = @baseMediumHigh；按下 = 滑块 @baseWhite、轨道 @baseMid；禁用 = @baseLow
+     开：滑块 @baseWhite、轨道边框 transparent、**轨道底色 = 应用强调色**
+         （官方只写 border-color: transparent，把背景留给应用；高对比度分支里正是把它设成 Highlight，
+          注释就写着 "Override Accent Color styles"）
+     hover：关 → 滑块与轨道边框 @baseHigh；开 → 滑块 @baseWhite
+   ⚠ 强调色：WinJS 从不定义它（官方规定由应用/系统提供）→ 本库用 `--win-accent` 变量，
+     默认值见文件顶部 :root。**别把它设成白色**：ON 态白滑块会在白轨道上看不见。 */
+.win-toggleswitch { outline: 0; }
+.win-toggleswitch-header {
+    max-width: 470px; margin: 22px 0 14px;
+    font-size: 15px; font-weight: 400; line-height: 1.333;      /* 官方 _win-type-body() */
+}
+/* 取值文字容器：官方放在 **clickregion 之内、轨道之后**（`.win-toggleswitch-value { margin-left: 12px }`
+   就是给"文字跟在轨道右边"用的）。放进 clickregion 之后，文字与轨道会**垂直对齐**（实测两者 y 完全相同）。
+   注意：两个 inline-block 之间的换行会折叠成一个空格，所以实际间距 ≈16px（12 外边距 + 4 空格）——
+   官方的 DOM 也是 `innerHTML.join('\n')` 生成的，同样有这 4px。 */
+.win-toggleswitch-values { display: inline-block; vertical-align: top; }
+.win-toggleswitch-value {
+    margin-left: 12px; height: 20px; vertical-align: top;
+    font-size: 15px; font-weight: 400; line-height: 20px;       /* 官方：行高 = 轨道高 20px */
+}
+.win-toggleswitch-description { font-size: 12px; width: 22em; margin-top: 28px; display: none; }
+.win-toggleswitch-clickregion {
+    display: inline-block; touch-action: none; padding-top: 5px;
+    -ms-user-select: none; -webkit-user-select: none; user-select: none;
+}
+.win-toggleswitch-track {
+    position: relative; display: inline-block; box-sizing: border-box;
+    width: 44px; height: 20px; border-style: solid; border-width: 2px; border-radius: 10px;
+}
+.win-toggleswitch-thumb {
+    position: absolute; top: 3px; display: inline-block;
+    width: 10px; height: 10px; border-radius: 5px;
+    -webkit-transition: left 0.1s; transition: left 0.1s;       /* 官方 100ms */
+}
+.win-toggleswitch-off .win-toggleswitch-thumb { left: 3px; }
+.win-toggleswitch-on  .win-toggleswitch-thumb { left: 27px; }
+/* 官方焦点框（raw/less_styles-toggleswitch.less:85 `&:focus { .win-toggleswitch-clickregion {
+   outline-width: 1px; outline-style: dotted; } }`）—— 官方写的是 `:focus`，
+   那个年代还没有 :focus-visible，于是**鼠标点一下也会冒出虚线框**（真实反馈："点开关时的虚线框"）。
+   本库改成 :focus-visible（与导航项同一个理由：官方 .win-keyboard:focus = "键盘操作中"）：
+   键盘 Tab 仍有官方那圈 1px dotted，鼠标点击不再出。
+   要退回官方原样：把 :focus-visible 改回 :focus。 */
+.win-toggleswitch:focus-visible .win-toggleswitch-clickregion { outline-width: 1px; outline-style: dotted; }
+.win-toggleswitch.win-toggleswitch-dragging .win-toggleswitch-thumb { -webkit-transition: none; transition: none; }
+.win-toggleswitch-off .win-toggleswitch-value-on { visibility: hidden; height: 0; font-size: 0; line-height: 0; }
+.win-toggleswitch-on  .win-toggleswitch-value-off { visibility: hidden; height: 0; font-size: 0; line-height: 0; }
+/* 配色（dark） */
+.win-toggleswitch-thumb { background-color: rgba(255, 255, 255, .8); }            /* @baseMediumHigh */
+.win-toggleswitch-off .win-toggleswitch-track { border-color: rgba(255, 255, 255, .8); }
+.win-toggleswitch-on  .win-toggleswitch-thumb { background-color: #fff; }         /* @baseWhite */
+.win-toggleswitch-on  .win-toggleswitch-track { border-color: transparent; background-color: var(--win-accent, #fff); }
+.win-toggleswitch-pressed .win-toggleswitch-thumb { background-color: #fff; }
+.win-toggleswitch-pressed .win-toggleswitch-track { border-color: transparent; background-color: rgba(255, 255, 255, .6); }  /* @baseMid */
+.win-toggleswitch-on.win-toggleswitch-pressed .win-toggleswitch-track { background-color: rgba(255, 255, 255, .6); }
+.win-toggleswitch-disabled .win-toggleswitch-thumb,
+.win-toggleswitch-disabled .win-toggleswitch-track { background-color: rgba(255, 255, 255, .2); border-color: rgba(255, 255, 255, .2); }  /* @baseLow */
+.win-toggleswitch:not(.win-toggleswitch-disabled):not(.win-toggleswitch-pressed) .win-toggleswitch-clickregion:hover .win-toggleswitch-thumb { background-color: #fff; }
+.win-toggleswitch-off:not(.win-toggleswitch-disabled):not(.win-toggleswitch-pressed) .win-toggleswitch-clickregion:hover .win-toggleswitch-track { border-color: #fff; }
+/* 浅色主题 */
+.win-light .win-toggleswitch-thumb { background-color: rgba(0, 0, 0, .8); }
+.win-light .win-toggleswitch-off .win-toggleswitch-track { border-color: rgba(0, 0, 0, .8); }
+.win-light .win-toggleswitch-on .win-toggleswitch-thumb { background-color: #fff; }
+
+/* ── 滑块（官方 **intrinsic** 控件：input[type=range].win-slider）────────────
+   WinJS 没有 Slider 控件类，官方把滑块当"原生元素"样式化：
+   src/less/styles-intrinsic.less §Horizontal slider
+     280×44；轨道高 2px、无边框；滑块 8×24、圆角 4px、margin-top −11px（把滑块提上去压住轨道）
+     （WCAG/Chrome 差异官方也记了：webkit 下要给 margin-top，ms 下要 inherit —— 官方注释原话）
+   配色：src/less/colors-intrinsic.less + colors-globalIntrinsics.less（dark）
+     轨道（官方叫 upper fill）= @baseMediumMid rgba(255,255,255,.4)；hover @baseMid .6；按下回到 .4；禁用 @baseLow .2
+     滑块静止 = @baseHigh #fff（推断依据：官方 hover 值 @sliderThumbHover = #f9f9f9 只比纯白略暗，
+       按下 @chromeHigh #767676，禁用 @sliderThumbDisabled #333 —— 官方的滑块就是亮/中/暗三档）
+   ⚠ 官方的"已填充段"（fill-lower）只对 IE 定义，颜色是**应用强调色**
+     （强调色规则 `.win-slider::-ms-fill-lower { background: <accent> }`；高对比度分支给 Highlight）。
+     WebKit **没有**填充段伪元素 → "轨道 + 滑块"就是官方在 WebKit 下的完整样子，所以这里不加填充条；
+     Firefox 有 `::-moz-range-progress` 可补，Chromium 要自己叠一层元素。 */
+.win-slider { -webkit-appearance: none; appearance: none; width: 280px; height: 44px; background-color: transparent; }
+.win-slider::-webkit-slider-runnable-track {
+    height: 2px; border-style: none; background: rgba(255, 255, 255, .4);
+}
+.win-slider::-moz-range-track { height: 2px; border-style: none; background: rgba(255, 255, 255, .4); }
+.win-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; margin-top: -11px;                /* 官方：webkit 下要把滑块提上去 */
+    width: 8px; height: 24px; border-radius: 4px; border-style: none; background: #fff;
+}
+.win-slider::-moz-range-thumb { width: 8px; height: 24px; border-radius: 4px; border-style: none; background: #fff; }
+.win-slider:hover::-webkit-slider-runnable-track { background: rgba(255, 255, 255, .6); }
+.win-slider:hover::-moz-range-track { background: rgba(255, 255, 255, .6); }
+.win-slider:hover::-webkit-slider-thumb { background: #f9f9f9; }   /* @sliderThumbHover */
+.win-slider:hover::-moz-range-thumb { background: #f9f9f9; }
+.win-slider:active::-webkit-slider-runnable-track { background: rgba(255, 255, 255, .4); }
+.win-slider:active::-moz-range-track { background: rgba(255, 255, 255, .4); }
+.win-slider:active::-webkit-slider-thumb { background: #767676; }  /* @chromeHigh */
+.win-slider:active::-moz-range-thumb { background: #767676; }
+.win-slider:disabled::-webkit-slider-runnable-track { background: rgba(255, 255, 255, .2); }
+.win-slider:disabled::-moz-range-track { background: rgba(255, 255, 255, .2); }
+.win-slider:disabled::-webkit-slider-thumb { background: #333; }   /* @sliderThumbDisabled */
+.win-slider:disabled::-moz-range-thumb { background: #333; }
+/* 浅色主题 */
+.win-light .win-slider::-webkit-slider-runnable-track { background: rgba(0, 0, 0, .4); }
+.win-light .win-slider::-webkit-slider-thumb { background: #000; }
+.win-light .win-slider:hover::-webkit-slider-thumb { background: #1f1f1f; }   /* light: @sliderThumbHover */
+.win-light .win-slider:disabled::-webkit-slider-thumb { background: #ccc; }  /* light: @sliderThumbDisabled */
+
+/* ── 下拉框（官方固有元素 select.win-dropdown）────────────────────────────
+   src/less/styles-intrinsic.less §Dropdown
+     min-width 56 / max-width 368 / min-height 32 / margin 8px 0 / border 2px solid /
+     box-sizing border-box / border-radius 0 / _win-type-body()（15px/400）
+     ::-ms-value 内距 5px 12px 7px 12px；::-ms-expand 字号 20px
+   配色：src/less/colors-globalIntrinsics.less
+     select  color @baseHigh / background @baseLow / border @baseMediumMid
+     hover   background @chromeMediumMid / border @baseMid
+     disabled color @baseLow / background @baseLow
+     option  color @baseHigh / background @chromeMediumMid；:checked → @baseWhite
+   ⚠ 替身说明：官方那个展开箭头是 `select::-ms-expand`（IE 专属伪元素），Chromium/Safari 没有 ——
+     所以这里 `appearance: none` 后自绘一个箭头（与汉堡键同样的替代思路），位置按官方
+     ::-ms-expand 的右边距 5px 摆。 */
+.win-dropdown {
+    min-width: 56px; max-width: 368px; min-height: 32px;
+    margin: 8px 0; padding: 5px 24px 7px 12px;    /* 官方 ::-ms-value 内距 + 右侧给箭头留位 */
+    border-style: solid; border-width: 2px; border-radius: 0;
+    box-sizing: border-box; background-clip: border-box;
+    font-size: 15px; font-weight: 400; line-height: 1.333;
+    color: #fff;                                   /* @baseHigh */
+    background-color: rgba(255, 255, 255, .2);     /* @baseLow */
+    border-color: rgba(255, 255, 255, .4);         /* @baseMediumMid */
+    -webkit-appearance: none; appearance: none;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0h10L5 6z' fill='%23ffffff'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 5px center;   /* 官方 ::-ms-expand 右边距 */
+    cursor: pointer;
+}
+.win-dropdown:hover {
+    background-color: #2b2b2b;                     /* @chromeMediumMid */
+    border-color: rgba(255, 255, 255, .6);         /* @baseMid */
+}
+/* 焦点提示 = **强调色边框**（官方对固有控件的焦点就是强调色边框：强调色规则里那条
+   `.win-textbox:focus { border-color: <accent> }`；下拉框官方 less 里没有焦点样式）。
+   ⚠ 这里**不能用虚线框**：`<select>` 在 Chrome 里算"支持键盘输入的表单控件"，
+   鼠标点一下也会命中 `:focus-visible`（实测 `ring=dotted/1px`）—— `:focus-visible` 挡不住它，
+   而用户要的就是"鼠标点一下别冒框"。所以下拉框改成边框变色，并把浏览器自带焦点环关掉
+   （官方对固有控件也是这么做的：`.win-textbox` 与 `.win-toggleswitch` 根上都有 `outline: 0`，
+   再自己画指示）。虚线焦点框只留给开关、复选框/单选、导航项这些**能区分输入模态**的元素。 */
+.win-dropdown:focus { outline: none; border-color: var(--win-accent); }
+.win-dropdown:disabled {
+    color: rgba(255, 255, 255, .2);                /* @baseLow */
+    background-color: rgba(255, 255, 255, .2);
+    cursor: default;
+}
+.win-dropdown option {
+    color: #fff;                                   /* @baseHigh */
+    background-color: #2b2b2b;                     /* @chromeMediumMid */
+}
+/* 选中项：文字 @baseWhite、底色 = **应用强调色**
+   （colors-intrinsic.less 只写了 color，底色出自 IntrinsicControls.js 强调色规则
+     `.win-dropdown option:checked { background-color: <accent> }`） */
+.win-dropdown option:checked { color: #fff; background-color: var(--win-accent); }
+.win-light .win-dropdown { color: #000; background-color: rgba(0, 0, 0, .2); border-color: rgba(0, 0, 0, .4); }
+.win-light .win-dropdown:hover { background-color: #f2f2f2; border-color: rgba(0, 0, 0, .6); }
+
+/* ── 进度条（官方固有元素 progress.win-progress-bar）──────────────────────
+   src/less/styles-intrinsic.less §Progress
+     尺寸 180×4；`.win-medium` 296 宽；`.win-large` 100% 宽
+     不确定态：`::-webkit-progress-value` 跑官方关键帧 win-progress-indeterminate（3s linear infinite）
+     暂停态 `.win-paused`：官方 win-progress-fade-out 3s cubic-bezier(0.03,0.76,0.31,1.0) → opacity .5
+   配色：src/less/colors-intrinsic.less
+     确定态轨道背景 @baseLow；`::-webkit-progress-bar` 透明（官方注释说这是 webkit 的叠加问题不得不写）
+   ⚠ 填充色（进度值那一段）**就是应用强调色**，值在强调色规则里（src/js/WinJS/Controls/IntrinsicControls.js）：
+      `.win-progress-bar::-webkit-progress-value { background-color: <accent> }`
+      `.win-progress-bar:not(:indeterminate)::-moz-progress-bar { background-color: <accent> }`
+     所以这里用同一个 `--win-accent`，与开关 ON 态、下拉框选中项一致。
+   ⚠ `.win-ring`（转圈进度环）没做：官方几何与配色可以照抄（20/40/60px、背景透明），
+     但那个"转圈"是系统原语（IE 的 -ms-ring）画的，CSS 抄不到 —— 要做只能自绘替身。 */
+.win-progress-bar {
+    width: 180px; height: 4px;
+    -webkit-appearance: none; appearance: none;
+    border-style: none;
+    background-color: transparent;
+}
+.win-progress-bar.win-medium { width: 296px; }
+.win-progress-bar.win-large  { width: 100%; }
+.win-progress-bar:not(:indeterminate) { background-color: rgba(255, 255, 255, .2); }   /* @baseLow */
+.win-progress-bar::-webkit-progress-bar { background-color: transparent; }              /* 官方原样（webkit 叠加问题） */
+.win-progress-bar::-webkit-progress-value { background-color: var(--win-accent, #fff); }
+.win-progress-bar::-moz-progress-bar { background-color: var(--win-accent, #fff); }
+.win-progress-bar:indeterminate::-webkit-progress-value {
+    position: relative;
+    -webkit-animation: win-progress-indeterminate 3s linear infinite;
+    animation: win-progress-indeterminate 3s linear infinite;
+}
+.win-progress-bar.win-paused:not(:indeterminate) {
+    animation-name: win-progress-fade-out;
+    animation-duration: 3s;
+    animation-timing-function: cubic-bezier(0.03, 0.76, 0.31, 1.0);   /* 官方原值 */
+    opacity: 0.5;
+}
+@-webkit-keyframes win-progress-indeterminate {   /* 官方关键帧，原样 */
+    0%    { left: 0; width: 25%; }
+    50%   { left: calc(75%); width: 25%; }
+    75%   { left: calc(100%); width: 0%; }
+    75.1% { left: 0; width: 0%; }
+    100%  { left: 0; width: 25%; }
+}
+@keyframes win-progress-fade-out { from { opacity: 1.0; } to { opacity: 0.5; } }
+
+/* （原来这里有一块官方的 .win-tooltip：按用户 2025 的要求删掉了。
+     要加回来：把 WinJS `src/less/styles-tooltip.less` + `colors-tooltip.less` 的数值抄回来即可 ——
+     max-width 320 / 内距 4px 7px 6px 7px / 边框 1px solid / caption 12px；
+     色 @baseHigh 字 + @chromeHigh 边 + @chromeMediumMid 底；进出场用官方 fadeIn / fadeOut。
+     KIT.md 第 19 条与本文件同处都留了这条还原路径。） */
+
+/* ── 固有元素的小工具类（官方 styles-intrinsic.less，原样）──────────────── */
+.win-code { font-family: "Consolas", "Menlo", "Monaco", "Courier New", monospace; font-size: 15px; font-weight: 400; line-height: 1.333; }
+.win-type-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.win-scrollview { overflow-x: auto; overflow-y: hidden; height: 400px; width: 100%; }
+
+/* ── 左侧导航：官方 SplitView（容器）+ 官方侧栏规范（内容）──────────────────
+   【WinJS · Metro 权威，本库所有数值的来源】
+     src/less/styles-splitview.less            结构；pane 展开 320px / 收起 48px；overlay 摆放方式
+     src/less/styles-splitviewcommand.less     导航项：行高 48、左右内距 16、图标框 16×16
+                                               (font-size:16 / margin-top:14 / margin-right:16)、
+                                               标签 _win-type-body() 15px/400 + margin 13/15
+     src/less/styles-splitviewpanetoggle.less  菜单按钮 48×48；字形 \E700，font-size 24px
+     src/less/colors-splitviewcommand.less     静止 transparent + @baseHigh 文字；hover @listHover；
+                                               按下 @listPress；键盘焦点 1px dotted @baseHigh
+   【WinUI NavigationView 文档 · 结构权威（WinJS 的窗格是空容器，这些由应用定）】
+     窗格内容 = 菜单按钮 + PaneTitle（"shows the text next to the menu button"）+ 条目 + 设置入口；
+     "FooterMenuItems will be displayed before the Settings item by default" → 设置入口在窗格**底部**；
+     "Selected items will draw their selection indicators along their left edge when in left mode"；
+     自适应三档与 52px 表头见 KIT.md 第 18 条。 */
+.win-splitview {
+    position: relative; width: 100%; height: 100%;
+    display: flex; overflow: hidden;
+}
+.win-splitview-panewrapper {          /* 动画用的 clipper，overflow:hidden 让位移看起来像改宽度 */
+    position: absolute; top: 0; left: 0; height: 100%;
+    z-index: 1; overflow: hidden; display: flex; flex: none;
+}
+.win-splitview-pane {                 /* 宽度恒为展开值 320px；收起状态由 transform 表达（官方错觉动画） */
+    width: 320px; height: 100%; overflow: hidden;
+    background-color: #1f1f1f;
+    display: flex; flex-direction: column;   /* 官方"设置入口在窗格底部"要靠 margin-top:auto 实现 */
+}
+.win-splitview-contentwrapper { position: relative; z-index: 0; flex: 1 1 0%; overflow: hidden; }
+.win-splitview-content {
+    position: absolute; width: 100%; height: 100%;
+    /* 本库附加（官方原规则只有前面四行）：内容区自己成为一个层叠上下文。
+       原因：页面转场会给页面挂 z-index（transitionTo 用 1/2），而内容区表头
+       （Minimal 档那条 52px，含菜单按钮）就在同一个父层里 —— 不隔开的话
+       页面会盖住表头，表现为"跳到某页后汉堡键消失"。z-index:0 把页面栈关进
+       自己这一层，表头随便给个 1 就永远在上面，跟页面用多大 z-index 无关。 */
+    z-index: 0;
+}
+
+/* 窗格表头行 = 菜单按钮 + PaneTitle（官方结构）。
+   行高就是官方的 48px —— 它同时承担了"窗格内容距顶部太近"的问题：
+   条目从这一行下面开始，而不是贴着窗格顶端。
+   ⚠ 这里**不能**加左右内边距：菜单按钮必须贴窗格左缘（x=0..48），
+   图标条（48px）里它才是"完整可见且居中"的那一格；给它加 16px 内边距会把三条杠推到 x=31..49 被裁掉。
+   标题的左边距单独加在标题上（按钮在时它自然落在 x=64，按钮隐藏时落在 x=16 与图标列对齐）。 */
+.win-splitview-panehead { height: 48px; flex: none; display: flex; align-items: center; }
+/* PaneTitle 的字号官方没规定，取官方斜坡的 subtitle 档（20/400） */
+.win-splitview-panehead .win-type-subtitle { color: #fff; margin-left: 16px; }
+
+/* 窗格底部 = 设置入口（官方："an optional entry point for app settings"，排在窗格最后） */
+.win-splitview-panefooter { margin-top: auto; flex: none; }
+
+/* 导航项（官方 .win-splitviewcommand） */
+.win-splitviewcommand { display: flex; flex: none; touch-action: manipulation; }
+.win-splitviewcommand-button {
+    flex: 1 1 0%; position: relative; display: block;
+    background-color: transparent; color: #fff;     /* @splitViewCommandRest / @baseHigh */
+    /* 官方那个 class 套在 <div> 上，所以没有 UA 默认内边距；这里用 <button>（无障碍更好）
+       —— UA 的 1px 6px 内边距必须清零，否则行高变 50px、图标与文字整体右移 6px，
+       48px 图标条的几何就全错了。 */
+    border: 0; padding: 0; margin: 0; width: 100%;
+    text-align: left; font: inherit; cursor: pointer;
+    -webkit-appearance: none; appearance: none;
+}
+.win-splitviewcommand-button:hover  { background-color: rgba(255, 255, 255, .1); }  /* @listHover */
+.win-splitviewcommand-button:active { background-color: rgba(255, 255, 255, .2); }  /* @listPress */
+/* 官方键盘焦点框（colors-splitviewcommand.less）：1px dotted @baseHigh 铺满条目。
+   官方用 .win-keyboard:focus 表示"键盘操作中"，Web 里对应 :focus-visible（鼠标点击不出框）。 */
+.win-splitviewcommand-button:focus { outline: none; }
+.win-splitviewcommand-button:focus-visible::before {
+    content: ""; pointer-events: none; position: absolute; box-sizing: border-box;
+    top: 0; left: 0; width: 100%; height: 100%;
+    border: 1px dotted #fff;
+}
+/* 选中态 —— 官方 WinUI："Selected items will draw their selection indicators
+   along their left edge when in left mode"。指示条贴条目左缘：
+   宽度取官方 Metro 的 2px 边宽（.win-button 的 2px border、高对比度下导航项也是 2px），
+   高度占满条目（官方 48px 行）；颜色是"应用的强调色"—— WinJS 从不定义强调色
+   （官方把 0.6 不透明度的强调色留给应用提供），所以这里用变量，默认白色维持本库单色观感。 */
+.win-splitviewcommand-button[aria-current="page"]::after {
+    content: ""; pointer-events: none;
+    position: absolute; left: 0; top: 0; bottom: 0; width: 2px;
+    background-color: var(--win-accent, #fff);
+}
+.win-splitviewcommand-button-content {
+    position: relative; height: 48px; padding: 0 16px; display: flex;
+}
+/* 导航图标框：官方 16×16、margin-top 14（官方注释 "Center icon vertically"）、margin-right 16。
+   ⚠ 官方就是 14px，不要"顺手改成 16 看起来更居中"—— 官方是拿它去对齐标签文字
+   （标签盒 13..33，图标盒 14..30）的，改了反而和文字错位。 */
+.win-splitviewcommand-icon {
+    width: 16px; height: 16px; flex: none; margin: 14px 16px 0 0;
+    display: block; color: inherit;
+}
+/* 图标本体是自绘 SVG（官方图标字体 Segoe MDL2/UI Symbol 在 macOS 不存在，
+   且 Unicode 回退字形墨迹差一倍 —— 见 KIT.md「导航图标」）。
+   SVG 是替换元素，必须 display:block 消掉行内基线间隙，否则盒高会被撑到 17px 左右。 */
+.win-splitviewcommand-icon svg { display: block; width: 16px; height: 16px; }
+/* 图标定义（<symbol>）只在模板里出现一次，这里只负责让 sprite 不占位 */
+.win-navicon-sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+/* 导航项标签：官方一字不差 —— _win-type-body() = 15px/400 + line-height 1.333，margin 13/15，
+   合起来正好 48px 行高（20 + 13 + 15）。这三个数一起构成官方的行几何，别单独改其中一个。 */
+.win-splitviewcommand-label {
+    flex: 1 1 0%; overflow: hidden; white-space: nowrap;
+    font-size: 15px; font-weight: 400; line-height: 1.333;
+    margin: 13px 0 15px;
+}
+
+/* 菜单按钮（官方 button.win-splitviewpanetoggle：48×48；字形 \E700，官方 font-size 24px） */
+button.win-splitviewpanetoggle {
+    touch-action: manipulation; box-sizing: border-box;
+    height: 48px; width: 48px; min-height: 0; min-width: 0;
+    padding: 0; border: 0; margin: 0; outline: none;
+    background-color: transparent; color: #fff; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+}
+button.win-splitviewpanetoggle:hover  { background-color: rgba(255, 255, 255, .1); }
+button.win-splitviewpanetoggle:active { background-color: rgba(255, 255, 255, .2); }
+/* 官方用 Segoe MDL2 字形 \E700、font-size 24px（styles-splitviewpanetoggle.less）；
+   macOS 无该字体，这里用三条杠替代 —— 尺寸按 24px 字形的光学大小取：
+   18px 宽、2px 粗、间距 6px（墨迹 18×14），与官方 48×48 按钮相称。
+   注意：伪元素必须 absolute —— 用 position:relative 时它们仍占普通流，
+   ::after 会被 ::before 的 2px 高度推下去，三段间距就不相等了。 */
+button.win-splitviewpanetoggle .bars {
+    position: relative; display: block;
+    width: 18px; height: 2px; background-color: currentColor;
+}
+button.win-splitviewpanetoggle .bars::before,
+button.win-splitviewpanetoggle .bars::after {
+    content: ""; position: absolute; left: 0;
+    width: 18px; height: 2px; background-color: currentColor;
+}
+button.win-splitviewpanetoggle .bars::before { top: -6px; }   /* 三段等距：-6 / 0 / +6 */
+button.win-splitviewpanetoggle .bars::after  { top:  6px; }

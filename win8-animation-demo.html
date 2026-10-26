@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Windows 8 官方 UI 动画 · 全量演示</title>
+<link rel="stylesheet" href="win8-animation-library.css">
+<link rel="stylesheet" href="win8-controls.css">   <!-- 官方斜坡 + 按钮/命令样式 -->
+<!--
+  覆盖 win8-animations.js 里的全部动画。每个磁贴都标注：官方参数 + 用在哪。
+  参数全部来自微软 MIT 许可的 WinJS 源码，见 official-values.md / where-used.md。
+-->
+<style>
+  :root {
+    /* --winjs-ease-standard 等由 win8-animation-library.css 的 :root 提供，不要手抄 */
+    --tile: #1f6fb2;
+    --appbar-h: 78px;
+    /* 工具条要装下官方控件：下拉框 36px（2px 边框 + 5/7 内距 + 15px 行高）+ 官方 margin 8px×2 = 52px */
+    --bar-h: 52px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: #000; color: #fff; overflow: hidden;
+    font: 15px/1.5 "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+  }
+
+  /* 页面必须整屏不透明，否则转场时两页内容会互相透出 */
+  .page {
+    position: absolute; inset: 0;
+    padding: calc(var(--bar-h) + 22px) 44px 34px;
+    overflow-y: auto; background: #000;
+  }
+  .page.back { transform: translateX(-100%); }
+
+  /* 字号/字重来自官方斜坡（win8-controls.css），这里只管间距与颜色 */
+  h1 { margin: 0 0 4px; }                      /* .win-type-subheader 34/200 */
+  .sub { color: #9a9a9a; margin: 0 0 22px; }   /* .win-type-caption   12/400 */
+  .sub code { color: #dcdcdc; }
+  .hint { color: #7fd6a0; font-size: 12.5px; margin: 0 0 14px; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+  .tile {
+    background: var(--tile); color: #fff; border: 0; padding: 13px;
+    text-align: left; font: inherit; cursor: pointer; min-height: 122px;
+    transform-origin: 50% 50%;
+  }
+  .tile small { display: block; opacity: .75; font-size: 11.5px; margin-top: 5px; }
+  .tile .t-where {
+    margin-top: 9px; padding-top: 8px; opacity: .95; font-size: 11px; line-height: 1.4;
+    border-top: 1px solid rgba(255, 255, 255, .25);
+  }
+  .tile.alt { background: #6b2fa0; }
+  .tile.warm { background: #b7472a; }
+  .tile.green { background: #2b7a3d; }
+  .tile.preview { background: #333; color: #bbb; min-height: 122px; display: flex; align-items: center; justify-content: center; }
+
+  #stage { position: absolute; inset: 0; }
+
+  #appbar {
+    position: absolute; left: 0; right: 0; bottom: 0; height: var(--appbar-h);
+    background: #1f1f1f; display: flex; align-items: center; gap: 18px; padding: 0 40px;
+    transform: translateY(100%); z-index: 5;
+  }
+  #appbar .win-command { height: var(--appbar-h); padding: 0 14px; }
+
+  #panel {
+    position: absolute; top: var(--bar-h); right: 0; bottom: 0; width: 364px;
+    background: #1f1f1f; padding: 30px; transform: translateX(100%); z-index: 6;
+    overflow: hidden;   /* 内容带 100px 水平偏移进场，裁掉溢出才不会飘到面板外面 */
+  }
+  #panel h2 { margin: 0 0 14px; }                 /* .win-type-subtitle 20/400 */
+  #panel p { color: #b9b9b9; }                    /* .win-type-body 15/400 */
+
+  /* 注意：只用 opacity:0 隐藏是不够的 —— 元素仍然占据这块矩形并参与命中测试，
+     会把下面磁贴的点击全部吃掉（这正是「点 showPopup 磁贴没反应」的原因）。
+     所以隐藏时同时 visibility:hidden。 */
+  #popup {
+    position: absolute; left: 60px; top: 260px; background: #262626;
+    border: 1px solid #3d3d3d; padding: 6px 0; min-width: 210px;
+    opacity: 0; visibility: hidden; z-index: 7;
+  }
+  #popup.open { visibility: visible; }
+  #popup div { padding: 10px 18px; cursor: pointer; }
+  #popup div:hover { background: #3a3a3a; }
+
+  /* 顶部工具条：放顶部就不会压住贴底的 AppBar */
+  .bar {
+    position: fixed; top: 0; left: 0; right: 0; height: var(--bar-h);
+    display: flex; align-items: center; gap: 16px;
+    padding: 0 44px; background: #0d0d0d; color: #8d8d8d;
+    font-size: 12px; border-bottom: 1px solid #1f1f1f; z-index: 10;
+  }
+  .bar label {
+    cursor: pointer; user-select: none; white-space: nowrap;
+    display: inline-flex; align-items: center;   /* 让 20px 的官方复选框与工具条文字对齐 */
+  }
+  /* 这里**不能**再给 select 写边框/底色/内距 —— 那会盖掉官方 .win-dropdown 的数值
+     （原来那句 `background: #1a1a1a` 是简写，连官方自绘的箭头 background-image 一起抹掉了）。
+     观感全部来自 win8-controls.css，本文件只负责把它摆进工具条。 */
+  #log { color: #7fd6a0; margin-left: auto; }
+  #log b { color: #b8f0cd; font-weight: 500; }
+
+  /* ── 列表页 ─────────────────────────────────────────────────────── */
+  .list { display: flex; flex-direction: column; gap: 8px; max-width: 620px; }
+  .row { background: #1c1c1c; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; }
+  .row.detail { background: #111; color: #9a9a9a; font-size: 13px; }
+  .row .win-command { padding: 4px 10px; font-size: 13px; }
+  .toolbar { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+  /* 按钮外观来自官方 .win-button（win8-controls.css），这里只放布局 */
+
+  .sug-box { margin-top: 26px; max-width: 620px; }
+  .sug-box input {
+    width: 100%; background: #1c1c1c; border: 1px solid #3a3a3a; color: #fff;
+    padding: 10px 12px; font: inherit; outline: none;
+  }
+  #suggest { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+  .sug { background: #171717; padding: 9px 12px; font-size: 13.5px; color: #dcdcdc; }
+
+  /* ── 分批进入转场演示页 ─────────────────────────────────────────── */
+  .stagger-region { margin-bottom: 22px; }
+  .batch {
+    display: inline-block; margin-bottom: 8px; padding: 2px 8px;
+    background: #1d3350; border: 1px solid #2f5c8f; color: #9fd0ff;
+    font-size: 11px; letter-spacing: .3px;
+  }
+  .stagger-note { color: #b9b9b9; font-size: 13.5px; }
+  .stagger-note code, .sub code { color: #dcdcdc; }
+  .stagger-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .stagger-cards > div {
+    background: #1f6fb2; padding: 18px 14px; font-size: 13.5px; min-height: 74px;
+  }
+  .stagger-controls { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 26px; }
+  .stagger-controls .win-button { min-width: 0; }   /* 演示条里按钮多，放宽官方 120px 最小宽 */
+
+  /* ── 手势页 ─────────────────────────────────────────────────────── */
+  .swipe-list { max-width: 560px; display: flex; flex-direction: column; gap: 8px; }
+  .swipe-row {
+    position: relative; background: #1c1c1c; padding: 14px 52px 14px 16px;
+    cursor: grab; user-select: none; touch-action: none;
+  }
+  .swipe-row.selected { background: #1d3350; }
+  .swipe-box {
+    position: absolute; right: 16px; top: 50%; margin-top: -12px;
+    width: 24px; height: 24px; line-height: 20px; text-align: center;
+    border: 2px solid #6cb8ff; color: #6cb8ff; font-size: 14px; opacity: 0;
+  }
+  .strip { display: flex; gap: 12px; margin-top: 6px; }
+  .strip-item {
+    width: 62px; height: 62px; background: #2b7a3d; display: flex;
+    align-items: center; justify-content: center; font-size: 12px; color: #eafff0;
+    user-select: none; touch-action: none; cursor: grab;
+  }
+</style>
+</head>
+<body>
+<div class="bar">
+  <span>转场：</span>
+  <!-- 官方固有元素 select.win-dropdown（演示页也用官方控件，别留原生下拉框） -->
+  <select class="win-dropdown" id="navMode">
+    <option value="enterPage">enterPage（进场有、出场无）</option>
+    <option value="turnstile">turnstile 转门</option>
+    <option value="slide">slide 上下</option>
+    <option value="continuum">continuum 连续体</option>
+    <option value="drillIn">drillIn 下钻</option>
+  </select>
+  <!-- 复选框也用官方固有元素类（20×20、2px 边框、方角）；<label> 包裹 = 点文字也能勾选 -->
+  <label><input type="checkbox" class="win-checkbox" id="slow"> 慢放 ×3</label>
+  <label><input type="checkbox" class="win-checkbox" id="fast"> 加速 ×1/20</label>
+  <label><input type="checkbox" class="win-checkbox" id="off"> 关闭动画</label>
+  <span id="log">最近触发：<b>—</b></span>
+</div>
+
+<div id="stage">
+  <!-- ① 磁贴页（data-enter-on-load：打开页面就播一次官方分批进场，KIT.md 规则 21） -->
+  <section class="page" id="home" aria-label="主页" data-enter-on-load>
+    <h1 class="win-type-subheader" data-batch="1">Windows 8 官方 UI 动画</h1>
+    <p class="sub win-type-caption" data-batch="2">参数与用途都取自微软官方源码与文档 · 每个磁贴标注「官方参数」与「用在哪」</p>
+    <div class="grid" id="tiles" data-batch="3"></div>
+  </section>
+
+  <!-- ② 列表页 -->
+  <section class="page back" id="listPage" aria-label="列表动画页">
+    <h1 class="win-type-subheader" data-batch="1">列表动画</h1>
+    <p class="sub win-type-caption" data-batch="2">官方 FLIP 三段式：先建动画对象（记录位置）→ 改 DOM → execute</p>
+    <div class="toolbar win-controls">
+      <button class="win-button" data-act="add">新增一项（addToList）</button>
+      <button class="win-button" data-act="expand">展开详情（expand）</button>
+      <button class="win-button" data-act="collapse">收起详情（collapse）</button>
+      <button class="win-button" data-act="reposition">重排（reposition）</button>
+      <button class="win-button" data-act="back">← 返回主页</button>
+    </div>
+    <div class="list" id="list" data-batch="3"></div>
+
+    <div class="sug-box" data-batch="4">
+      <p class="hint">搜索建议列表 —— 与普通列表区分：新增 117ms、删除 93ms（linear，更快），其余项 400ms 归位</p>
+      <input id="sugInput" type="text" placeholder="输入关键词筛选建议（试试 片 / 剧 / 育）">
+      <div id="suggest"></div>
+    </div>
+  </section>
+
+  <!-- ③ 分批进入转场（独立演示）-->
+  <section class="page back" id="staggerPage" aria-label="分批进入演示页">
+    <!-- 每个区域独占一批：大标题单独一批，不与副标题同批 -->
+    <div class="stagger-region" data-batch="1">
+      <span class="batch">批次 1 · 0ms · 大标题</span>
+      <h1 class="win-type-subheader">分批进入</h1>
+    </div>
+
+    <div class="stagger-region" data-batch="2">
+      <span class="batch">批次 2 · +83ms · 副标题</span>
+      <p class="sub win-type-caption">官方 <code>enterPage</code> 的 staggered entry —— 页面拆成若干区域，各区域分批上屏</p>
+    </div>
+
+    <div class="stagger-region" data-batch="3">
+      <span class="batch">批次 3 · +166ms · 说明</span>
+      <p class="stagger-note">批次由 <b>嵌套数组的顶层</b> 决定：<code>enterPage([[标题],[副标题],[说明],[内容]])</code>
+         → 依次 0 / 83 / 166 / 249 ms。<br>
+         同一内层数组里的元素才会一起进，例如 <code>[[标题],[副标题],[说明,内容]]</code> → 0 / 83 / 166 / 166 ms。<br>
+         官方交错量是 <code>min(83 × i, 333)</code> ms；<b>方向默认"从右往左滑"</b>，靠 <code>enterPage</code> 的 offset
+         参数给水平偏移（官方 SettingsFlyout 用的就是 <code>{left:"±100px"}</code>）。</p>
+    </div>
+
+    <div class="stagger-region" data-batch="4">
+      <span class="batch">批次 4 · +249ms · 内容</span>
+      <div class="stagger-cards">
+        <div>内容块 1</div><div>内容块 2</div><div>内容块 3</div>
+        <div>内容块 4</div><div>内容块 5</div><div>内容块 6</div>
+      </div>
+    </div>
+
+    <!-- 控件不参与分批：官方设计指南要求主要控件尽早可用 -->
+    <div class="stagger-controls win-controls">
+      <button class="win-button" data-stagger="batched">重放 · 每个区域各自一批（默认）</button>
+      <button class="win-button" data-stagger="merged">重放 · 说明与内容合并成一批</button>
+      <button class="win-button" data-stagger="vertical">重放 · 官方默认偏移（下移 28px）</button>
+      <button class="win-button" data-act="back">← 返回主页</button>
+    </div>
+  </section>
+
+  <!-- ④ 手势页 -->
+  <section class="page back" id="gesturePage" aria-label="手势演示页">
+    <h1 class="win-type-subheader" data-batch="1">手势动画</h1>
+    <p class="sub win-type-caption" data-batch="2">滑动多选与拖拽落点，都是官方给自绘控件准备的手势词汇</p>
+
+    <p class="hint" data-batch="3">① 滑动多选：按住某行向下拖超过 60px 再松开 → swipeSelect；已选中的再拖一次 → swipeDeselect（直接单击也能选中，走的是同一对动画）</p>
+    <div class="swipe-list" id="swipeList" data-batch="3"></div>
+
+    <p class="hint" style="margin-top:26px" data-batch="4">② 拖拽落点：按住一个方块左右拖动 → 两侧方块让出空隙（dragBetweenEnter），移开即合上（dragBetweenLeave）</p>
+    <div class="strip" id="strip" data-batch="4"></div>
+
+    <p style="margin-top:26px" class="win-controls"><button class="win-button" data-act="back">← 返回主页</button></p>
+  </section>
+
+  <div id="appbar">
+    <button class="win-command" data-act="hideEdge">关闭 AppBar</button>
+    <button class="win-command" data-act="panel">打开设置面板</button>
+    <button class="win-command" data-act="popup">弹出菜单</button>
+    <button class="win-command" data-act="nav">页面转场演示</button>
+    <button class="win-command" data-act="gesture">手势演示页</button>
+    <button class="win-button" data-act="stagger">分批进入转场</button>
+  </div>
+
+  <aside id="panel">
+    <!-- 官方约定：面板内可分批进入的内容区域用 .win-content 标记
+         （SettingsFlyout 就是 query("div.win-content") 后逐块调 enterPage 的） -->
+    <div class="win-content">
+      <h2 class="win-type-subtitle">设置</h2>
+    </div>
+    <div class="win-content">
+      <p class="win-type-body">showPanel：框架从右侧 364px 滑入，550ms，<code>cubic-bezier(0.1, 0.9, 0.2, 1)</code>。</p>
+    </div>
+    <div class="win-content">
+      <p class="win-type-body">内容不是一起进来的：每个 <code>.win-content</code> 区域各自跑 <code>enterPage</code>
+         （±100px 位移 1000ms + 淡入 170ms），区域之间按官方批次交错 <b>83ms</b>。</p>
+    </div>
+    <div class="win-content">
+      <p class="win-type-body">所以框架 550ms 就位，内容还在长位移里滑 —— 这就是"标题先、内容随后落定"的层次感。</p>
+    </div>
+    <!-- 控件放在内容区域之外：内容分批滑入，按钮走官方 fadeIn（KIT.md 规则 15） -->
+    <div class="panel-actions win-controls"><button class="win-button" data-act="hidePanel">关闭</button></div>
+  </aside>
+
+  <div id="popup">
+    <div>复制</div><div>移动到…</div><div>重命名</div><div>删除</div>
+  </div>
+</div>
+
+<script src="win8-animations.js"></script>
+<script>
+(function () {
+  'use strict';
+  var A = window.Win8Anim;
+  // 统一的事件委托取值：点击常常落在按钮内部元素上（如图标 span），
+  // 必须用 closest 找到带 data-* 的命令元素，否则命令取不到、按钮表现为"点不动"。
+  function actOf(e, attr) {
+    var key = attr || 'data-act';
+    var el = (e.target && e.target.closest) ? e.target.closest('[' + key + ']') : null;
+    return el ? el.getAttribute(key) : null;
+  }
+
+  var appbar = document.getElementById('appbar');
+  var logEl = document.querySelector('#log b');
+  function note(name, detail) { logEl.textContent = name + (detail ? ' · ' + detail : ''); }
+
+  // 底部 AppBar 的出场位移 = 自身高度，正好等于 CSS 的 translateY(100%)
+  var APPBAR_OFFSET = { top: '78px', left: '0px' };
+
+  /* ── 磁贴 ──────────────────────────────────────────────────────────── */
+  var TILES = [
+    ['pointerDown / Up', 'scale(0.975) 167ms', '用在哪：开始屏幕磁贴按下与抬起（自绘磁贴的按下手感）', function (el) {
+      A.pointerDown(el).then(function () { setTimeout(function () { A.pointerUp(el); }, 220); });
+    }],
+
+    ['enterPage', '下移 28px→0，1000ms + 淡入 170ms，交错 83ms', '用在哪：页面导航的默认进场（官方枚举的 enterPage 项）', function (el) {
+      A.enterPage(el);
+    }],
+
+    ['enterPage 分批进入', '[[标题],[副标题],[内容]] → 0 / 83 / 166ms', '用在哪：官方 enterPage 的分批进场（大标题独占一批，内容依次顺延）', function () {
+      A.enterPage([
+        [document.querySelector('#home h1')],
+        [document.querySelector('#home .sub')],
+        [document.getElementById('tiles')]
+      ]);
+    }],
+
+    ['enterContent', '下移 28px，550ms + 淡入 170ms', '用在哪：页内内容区整体换内容（ListView 切视图、Hub 切 Section）', function (el) {
+      A.enterContent(el);
+    }],
+
+    ['exitPage / exitContent', '117ms linear', '用在哪：页面与内容退场，官方退场统一用 linear', function (el) {
+      A.exitContent(el).then(function () { el.style.opacity = '1'; A.enterContent(el); });
+    }],
+
+    ['crossFade', '各 167ms linear', '用在哪：同一位置换内容（官方注明不可用来表示导航）', function (el) {
+      var r = el.getBoundingClientRect();
+      var ghost = el.cloneNode(true);
+      ghost.style.cssText = 'position:fixed;margin:0;pointer-events:none;opacity:0;' +
+        'left:' + r.left + 'px;top:' + r.top + 'px;width:' + r.width + 'px;height:' + r.height + 'px';
+      document.body.appendChild(ghost);
+      A.crossFade(ghost, el).then(function () { el.style.opacity = '1'; ghost.remove(); });
+    }],
+
+    ['fadeIn / fadeOut', '250ms / 167ms linear', '用在哪：Tooltip、对话框根节点、遮罩层、NavBar 箭头、SemanticZoom 按钮', function (el) {
+      A.fadeOut(el).then(function () { A.fadeIn(el); });
+    }],
+
+    ['showPopup / hidePopup', '位移 367ms + 淡入 83ms（延迟 83ms）', '用在哪：Flyout 浮出控件、AutoSuggestBox 候选列表', function () {
+      togglePopupMenu();
+    }],
+
+    ['updateBadge', '位移 1333ms + 淡入 367ms', '用在哪：磁贴徽章数字更新（1333ms 是故意的重动画）', function (el) {
+      A.updateBadge(el);
+    }, 'alt'],
+
+    ['showEdgeUI', '从底边滑入 367ms（底部传正偏移）', '用在哪：AppBar 出入场', function () {
+      A.showEdgeUI(appbar, APPBAR_OFFSET);
+    }, 'warm'],
+
+    ['showPanel（官方原样）', '仅框架从右侧 364px 滑入 550ms', '用在哪：官方 showPanel 就两个参数，只管面板框架', function () {
+      A.showPanel(document.getElementById('panel'));
+      A.fadeIn(document.querySelector('#panel .panel-actions'));
+    }, 'warm'],
+
+    ['settingsFlyoutSlideIn', '框架 550ms + 内容逐区域同时进场（官方无交错）', '用在哪：复刻官方 SettingsFlyout._animateSlideIn（逐区域 enterPage，每区域延迟 0）', function () {
+      A.settingsFlyoutSlideIn(document.getElementById('panel'), null, { contentSelector: '.win-content' });
+      A.fadeIn(document.querySelector('#panel .panel-actions'));
+    }, 'warm'],
+
+    ['turnstileForwardIn', 'rotateY(80°)→0，300ms，交错 50ms', '用在哪：页面导航 turnstile（顶部选它可做整页转场）', function () {
+      A.turnstileForwardIn([].slice.call(document.querySelectorAll('#tiles .tile:not(.preview)')));
+    }, 'green'],
+
+    ['drillIn', 'scale(0.84)→1 500ms / 1→1.29 233ms', '用在哪：列表项进入详情页的下钻，返回用 drillOut', function (el) {
+      A.drillInIncoming(el).then(function () {
+        setTimeout(function () {
+          A.drillInOutgoing(el).then(function () { el.style.opacity = '1'; el.style.transform = ''; });
+        }, 700);
+      });
+    }, 'green'],
+
+    ['continuumForwardIn', 'scale(0.5)+rotateX(80°)→1，350ms', '用在哪：页面导航 continuum —— 缩略图放大到详情', function (el) {
+      A.continuumForwardIn(el);
+    }, 'alt'],
+
+    ['dragSourceStart / End', '源 1.05 倍 + 0.65 透明 240ms，复位 500ms', '用在哪：拖拽源拿起与放下（手势页有完整的落点演示）', function (el) {
+      var group = [].slice.call(document.querySelectorAll('#tiles .tile:not(.preview)')).filter(function (t) { return t !== el; });
+      A.dragSourceStart(el, group).then(function () {
+        setTimeout(function () {
+          A.dragSourceEnd(el).then(function () { group.forEach(function (t) { t.style.transform = ''; }); });
+        }, 700);
+      });
+    }],
+
+    ['createPeekAnimation', '受影响元素 2000ms 缓慢归位', '用在哪：Peek 窥视 —— 先记录位置、布局变化后缓慢归位', function () {
+      var all = [].slice.call(document.querySelectorAll('#tiles .tile:not(.preview)'));
+      var anim = A.createPeekAnimation(null, all);       // 先记录
+      var preview = document.createElement('div');
+      preview.className = 'tile preview';
+      preview.textContent = '窥视预览';
+      document.getElementById('tiles').insertBefore(preview, all[0]);   // 改布局
+      anim.execute();                                     // 其余磁贴用 2 秒缓慢就位
+      note('createPeekAnimation', '其余磁贴 2000ms 缓慢归位');
+      setTimeout(function () { A.fadeOut(preview).then(function () { preview.remove(); }); }, 2600);
+    }, 'warm'],
+
+    ['页面转场 → 列表页', '按顶部转场选择器执行', '用在哪：整页导航（PageNavigationAnimation 的六种）', function () {
+      navTo('listPage', false);
+    }, 'green'],
+
+    ['手势演示 → 手势页', '滑动多选 + 拖拽落点', '用在哪：swipeReveal/Select/Deselect、dragBetweenEnter/Leave', function () {
+      navTo('gesturePage', false);
+    }, 'green'],
+
+    ['分批进入 → 独立转场演示', '从右往左滑 + [[标题],[副标题],[说明],[内容]] → 0/83/166/249ms', '用在哪：官方 enterPage 文档的分批写法（大标题独占一批），做成一次真正的页面转场', function () {
+      navToStagger();
+    }, 'alt']
+  ];
+
+  var gridEl = document.getElementById('tiles');
+  TILES.forEach(function (def) {
+    var b = document.createElement('button');
+    b.className = 'tile' + (def[4] ? ' ' + def[4] : '');
+    b.innerHTML = def[0] + '<small>' + def[1] + '</small>' + '<small class="t-where">' + def[2] + '</small>';
+    if (def[0].indexOf('showPopup') === 0) { b.setAttribute('data-popup-toggle', ''); }
+    b.addEventListener('click', function () { note(def[0], def[1]); def[3](b); });
+    gridEl.appendChild(b);
+  });
+
+  /* ── 页面转场：按官方枚举选择动画 ──────────────────────────────────── */
+  var current = 'home';
+  var busy = false;
+  // 转场进行中又来的请求：**插队**（只留最后一个，并把在跑的页面动画推到终态让它立刻结算）。
+  // 官方 enterPage 有 1000ms，动画没放完就点下一张卡片时，旧写法 `if (busy) return;`
+  // 会把点击丢掉、界面停在半路（KIT.md 规则 6）。
+  // 用 finish 而不是 cancel：cancel 会让 finished 变 reject，Promise.all 不会 then，busy 会卡死。
+  var pending = null;
+  var inFlightTo = null;          // 正在切往哪个页面
+  function finishPageAnimations() {
+    if (!document.getAnimations) { return; }
+    document.getAnimations().forEach(function (a) {
+      var t = a.effect && a.effect.target;
+      if (!t || !t.closest || !t.closest('.page')) { return; }   // 只推页面里的，别碰边栏/应用栏
+      try { a.finish(); } catch (e) { /* 无限/延迟动画会抛，忽略 */ }
+    });
+  }
+
+  // 通用转场入口：谁进、谁出都由调用方给（官方的 entrance/exit 就是一对方函数）
+  function transitionTo(id, makeEnter, makeExit, label, detail) {
+    if (busy) {
+      // 连点同一个目标：不打断它（否则没放完的进场动画会被直接拍成最终态）
+      if (id === inFlightTo && !pending) { return; }
+      pending = { id: id, makeEnter: makeEnter, makeExit: makeExit, label: label, detail: detail };
+      finishPageAnimations();        // 插队：当前转场就地结算
+      return;
+    }
+    if (current === id) { return; }
+    inFlightTo = id;
+    busy = true;
+
+    var from = document.getElementById(current);
+    var to = document.getElementById(id);
+
+    to.className = 'page';
+    to.style.zIndex = 2;
+    // 入场页恢复干净状态：上一次出场可能把整页淡到 0（如 exitContent / 各转场的 *Out），
+    // 而分批进场只动画页内区域、不再动画 section 本身 —— 不清掉这个残留就会整页不可见（黑屏）。
+    to.style.opacity = '';
+    to.style.transform = '';
+    from.style.zIndex = 1;
+
+    // 控件不跟内容滑入，统一官方 fadeIn（KIT.md 规则 15）
+    [].slice.call(to.querySelectorAll('.win-controls')).forEach(function (c) { A.fadeIn(c); });
+
+    var enter = makeEnter(to, from);
+    var exit = makeExit ? makeExit(from, to) : Promise.resolve();
+
+    Promise.all([enter, exit]).then(function () {
+      from.className = 'page back';
+      from.style.transform = '';
+      from.style.opacity = '';   // 出场页已靠 .back 移到屏幕外，残留的透明度一并清掉
+      current = id;
+      busy = false;
+      inFlightTo = null;
+      if (label) { note(label, detail); }
+      // 期间被排队的点击：立刻续上（只跑最后一个）
+      var next = pending;
+      pending = null;
+      if (next) { transitionTo(next.id, next.makeEnter, next.makeExit, next.label, next.detail); }
+    });
+  }
+
+  /* ── 内容分批进场：所有转场通用 ──────────────────────────────────────
+     官方 enterPage 的两件事都在参数里：**嵌套数组的顶层 = 批次**，**offset = 从哪滑入**。
+     本演示给每个页面区域打 data-batch（1/2/3…），按批次收集成嵌套数组交给 enterPage；
+     方向默认"从右往左滑"（前进时内容自右侧滑入），与官方设计指南
+     "进场方向取阅读顺序的反向"一致；官方 SettingsFlyout 也用的是水平偏移 {left:"±100px"}。 */
+  // 水平偏移取官方 SettingsFlyout 值 ±100px（官方文档另建议：非必要就用默认偏移下移 28px）
+  var STAGGER_SLIDE = 100;
+
+  function contentOffset(backwards) {
+    return { top: '0px', left: (backwards ? -STAGGER_SLIDE : STAGGER_SLIDE) + 'px' };
+  }
+
+  // 按 data-batch 分组，返回嵌套数组（顶层即批次，与官方 enterPage 语义一致）
+  function pageBatches(page) {
+    var groups = {};
+    [].slice.call(page.querySelectorAll('[data-batch]')).forEach(function (el) {
+      var key = el.getAttribute('data-batch');
+      (groups[key] = groups[key] || []).push(el);
+    });
+    return Object.keys(groups).sort().map(function (k) { return groups[k]; });
+  }
+
+  function enterBatched(to, backwards) {
+    var batches = pageBatches(to);
+    if (!batches.length) { return null; }
+    return A.enterPage(batches, contentOffset(backwards));
+  }
+
+  function navTo(id, backwards) {
+    var mode = document.getElementById('navMode').value;
+    var nav = A.createPageNavigationAnimations(mode, mode, !!backwards);
+    transitionTo(id,
+      function (to) {
+        var batched = enterBatched(to, backwards);
+        // enterPage 这个模式本身表达的就是"内容分批进场"，由分批直接接管
+        if (mode === 'enterPage') { return batched || nav.entrance(to, contentOffset(backwards)); }
+        // 其他转场：页面框架跑该转场的官方动画，页内内容额外按官方 enterPage 分批进入
+        //（与官方 SettingsFlyout 的"框架 + 分批内容"两层结构同构）
+        var frame = nav.entrance(to, contentOffset(backwards));
+        return batched ? Promise.all([frame, batched]) : frame;
+      },
+      function (from) { return nav.exit(from, { top: '0px', left: backwards ? '100%' : '-100%' }); },
+      '转场 · ' + mode + ' · 内容分批', (backwards ? '返回' : '前进') + '：' + id);
+  }
+
+  /* ── 分批进入转场（独立演示）───────────────────────────────────────
+     官方 enterPage 的分批完全靠"嵌套数组的顶层"表达，这里演示两种官方写法：
+       按批次：[[标题,副标题],[说明],[内容]] → 0 / 0 / 83 / 166 ms
+       逐个：  [标题,副标题,说明,内容]       → 0 / 83 / 166 / 249 ms      */
+  function staggerEls() {
+    var page = document.getElementById('staggerPage');
+    return {
+      title: page.querySelector('h1'),
+      sub: page.querySelector('.sub'),
+      note: page.querySelector('.stagger-note'),
+      cards: page.querySelector('.stagger-cards')
+    };
+  }
+
+  // 大标题独占批次，其余依次顺延
+  function staggerGroups() {
+    var e = staggerEls();
+    return [[e.title], [e.sub], [e.note], [e.cards]];
+  }
+
+  function replayStagger(kind) {
+    var e = staggerEls();
+    if (kind === 'vertical') {
+      A.enterPage(staggerGroups());        // 官方文档推荐的默认偏移：下移 28px → 0
+      note('分批进入 · 官方默认偏移', '[[标题],[副标题],[说明],[内容]] → 0 / 83 / 166 / 249 ms（下移 28px→0）');
+    } else if (kind === 'merged') {
+      A.enterPage([[e.title], [e.sub], [e.note, e.cards]], contentOffset(false));
+      note('分批进入 · 说明与内容同批', '[[标题],[副标题],[说明,内容]] → 0 / 83 / 166 / 166 ms（同批一起进）');
+    } else {
+      A.enterPage(staggerGroups(), contentOffset(false));
+      note('分批进入 · 每区一批（默认）', '[[标题],[副标题],[说明],[内容]] → 0 / 83 / 166 / 249 ms（从右往左滑 ' + STAGGER_SLIDE + 'px）');
+    }
+  }
+
+  function navToStagger() {
+    transitionTo('staggerPage',
+      function (to) { return enterBatched(to, false); },       // 默认：从右往左滑 + 分批进场
+      function (from) { return A.exitContent(from); },         // 旧页 117ms linear 淡出
+      '分批进入转场', '区域自右侧滑入 · [[标题],[副标题],[说明],[内容]] → 0 / 83 / 166 / 249 ms');
+  }
+
+  document.getElementById('listPage').addEventListener('click', function (e) {
+    if (e.target.dataset && e.target.dataset.act === 'back') { navTo('home', true); }
+  });
+  document.getElementById('gesturePage').addEventListener('click', function (e) {
+    if (e.target.dataset && e.target.dataset.act === 'back') { navTo('home', true); }
+  });
+  document.getElementById('staggerPage').addEventListener('click', function (e) {
+    var act = actOf(e);
+    if (act === 'back') { navTo('home', true); }
+    var st = actOf(e, 'data-stagger');
+    if (st) { replayStagger(st); }
+  });
+
+  /* ── AppBar / 面板 / 弹出菜单 ──────────────────────────────────────── */
+  appbar.addEventListener('click', function (e) {
+    var a = actOf(e);
+    if (a === 'hideEdge') { A.hideEdgeUI(appbar, APPBAR_OFFSET); note('hideEdgeUI'); }
+    if (a === 'panel') {
+      A.settingsFlyoutSlideIn(document.getElementById('panel'), null, { contentSelector: '.win-content' });
+      note('showPanel', '框架 550ms + 内容分 3 批（交错 83ms）');
+    }
+    if (a === 'nav') { note('页面转场演示'); navTo('listPage', false); }
+    if (a === 'gesture') { note('手势演示页'); navTo('gesturePage', false); }
+    if (a === 'stagger') { navToStagger(); }
+    if (a === 'popup') { togglePopupMenu(); }
+  });
+
+  /* 弹出菜单：常驻显示，点空白处或再按一次触发按钮才关闭
+     （早先版本 1.5 秒后自动关闭，视觉上就像"闪一下不见了"） */
+  var popupEl = document.getElementById('popup');
+  var popupOpen = false;
+
+  function showPopupMenu() {
+    popupEl.classList.add('open');       // 先恢复可见与命中测试，再让官方动画把它淡入
+    popupEl.style.opacity = '0';
+    A.showPopup(popupEl);
+    popupOpen = true;
+    note('showPopup', '位移 367ms + 淡入 83ms（延迟 83ms）· 点空白处关闭');
+  }
+  function hidePopupMenu() {
+    if (!popupOpen) { return; }
+    popupOpen = false;
+    A.hidePopup(popupEl).then(function () {
+      popupEl.classList.remove('open');  // 淡出结束后才取消命中测试
+    });
+    note('hidePopup', '83ms linear');
+  }
+  function togglePopupMenu() { popupOpen ? hidePopupMenu() : showPopupMenu(); }
+
+  document.addEventListener('pointerdown', function (e) {
+    if (!popupOpen) { return; }
+    if (e.target.closest && (e.target.closest('#popup') || e.target.closest('[data-popup-toggle]'))) { return; }
+    hidePopupMenu();
+  });
+
+  document.getElementById('panel').addEventListener('click', function (e) {
+    if (actOf(e) === 'hidePanel') { A.hidePanel(document.getElementById('panel')); note('hidePanel'); }
+  });
+
+  /* ── 列表页：增删 / 展开 / 收起 / 重排 ─────────────────────────────── */
+  var listEl = document.getElementById('list');
+  var n = 0;
+  ['文档库', '图片库', '音乐库', '视频库', '下载'].forEach(function (t) { listEl.appendChild(makeRow(t)); });
+
+  function makeRow(text) {
+    var row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML = '<span>' + text + '</span>';
+    var btn = document.createElement('button');
+    btn.className = 'win-command';      // 行内动作是「命令」，不是按钮
+    btn.textContent = '删除';
+    btn.addEventListener('click', function () { deleteRow(row); });
+    row.appendChild(btn);
+    return row;
+  }
+
+  function detailRow(text) {
+    var d = document.createElement('div');
+    d.className = 'row detail';
+    d.textContent = text;
+    return d;
+  }
+
+  document.querySelector('.toolbar').addEventListener('click', function (e) {
+    var act = actOf(e);
+    if (!act) { return; }
+
+    if (act === 'add') {
+      var added = makeRow('新项目 ' + (++n));
+      var affected = [].slice.call(listEl.children);
+      var addAnim = A.createAddToListAnimation(added, affected);
+      listEl.insertBefore(added, listEl.firstChild);
+      addAnim.execute();
+      note('createAddToListAnimation', '新增项 120ms + ' + affected.length + ' 项归位 400ms');
+    }
+
+    if (act === 'expand') {
+      var rows = [].slice.call(listEl.children);
+      var detail = detailRow('展开出来的详情内容（167ms 淡入，受影响项 367ms 归位）');
+      var anim = A.createExpandAnimation(detail, rows.slice(1));
+      listEl.insertBefore(detail, rows.length ? rows[0].nextSibling : null);
+      anim.execute();
+      note('createExpandAnimation', rows.length > 1 ? (rows.length - 1) + ' 项受影响' : '无受影响项');
+    }
+
+    if (act === 'collapse') {
+      var details = [].slice.call(listEl.querySelectorAll('.row.detail'));
+      if (!details.length) { note('createCollapseAnimation', '先点「展开详情」'); return; }
+      var target = details[0];
+      var rest = [].slice.call(listEl.children).filter(function (r) { return r !== target; });
+      var collapseAnim = A.createCollapseAnimation([target], rest);
+      target.remove();
+      collapseAnim.execute();
+      note('createCollapseAnimation', '167ms 淡出 + ' + rest.length + ' 项归位 367ms');
+    }
+
+    if (act === 'reposition') {
+      var items = [].slice.call(listEl.children);
+      if (items.length < 2) { return; }
+      var repositionAnim = A.createRepositionAnimation(items);
+      items.slice().reverse().forEach(function (n2) { listEl.appendChild(n2); });   // 倒序重排
+      repositionAnim.execute();
+      note('createRepositionAnimation', items.length + ' 项 367ms 归位，交错 min(33×i, 250)');
+    }
+  });
+
+  function deleteRow(row) {
+    var remaining = [].slice.call(listEl.children).filter(function (r) { return r !== row; });
+    var anim = A.createDeleteFromListAnimation([row], remaining);
+    row.remove();
+    anim.execute();
+    note('createDeleteFromListAnimation', '120ms + ' + remaining.length + ' 项归位 400ms');
+  }
+
+  /* ── 搜索建议：createAddToSearchListAnimation / DeleteFromSearchList ── */
+  var ALL_SUGGEST = ['纪录片', '动画片', '电影', '电视剧', '综艺', '音乐', '体育', '新闻', '游戏', '教育'];
+  var sugEl = document.getElementById('suggest');
+
+  function makeSug(text) {
+    var d = document.createElement('div');
+    d.className = 'sug';
+    d.textContent = text;
+    return d;
+  }
+  ALL_SUGGEST.slice(0, 5).forEach(function (t) { sugEl.appendChild(makeSug(t)); });
+
+  function textOf(nodes) { return nodes.map(function (n) { return n.textContent; }); }
+
+  function updateSuggestions(q) {
+    var want = ALL_SUGGEST.filter(function (t) { return t.indexOf(q) !== -1; });
+    var existing = [].slice.call(sugEl.children);
+    var removed = existing.filter(function (n) { return want.indexOf(n.textContent) === -1; });
+    var keep = existing.filter(function (n) { return want.indexOf(n.textContent) !== -1; });
+    var addedText = want.filter(function (t) { return textOf(existing).indexOf(t) === -1; });
+    if (!removed.length && !addedText.length) { return; }
+
+    // 第一阶段：删除（先播完 93ms 淡出 + 其余项 400ms 归位，再把节点摘掉）
+    var phase = removed.length
+      ? A.createDeleteFromSearchListAnimation(removed, keep).execute().then(function () {
+          removed.forEach(function (n) { n.remove(); });
+        })
+      : Promise.resolve();
+
+    phase.then(function () {
+      if (!addedText.length) { note('搜索建议 · 删除', removed.length + ' 项（93ms linear）'); return; }
+      var newNodes = addedText.map(makeSug);
+      var affected = [].slice.call(sugEl.children);          // 记录位置（官方三段式的第一步）
+      var addAnim = A.createAddToSearchListAnimation(newNodes, affected);
+      want.forEach(function (t) {                             // 按目标顺序重排并插入新节点
+        var node = newNodes.filter(function (x) { return x.textContent === t; })[0] ||
+                   [].slice.call(sugEl.children).filter(function (x) { return x.textContent === t; })[0];
+        if (node) { sugEl.appendChild(node); }
+      });
+      addAnim.execute();
+      note('搜索建议 · 新增', newNodes.length + ' 项（117ms linear）+ ' + affected.length + ' 项归位');
+    });
+  }
+
+  document.getElementById('sugInput').addEventListener('input', function (e) {
+    updateSuggestions(e.target.value.trim());
+  });
+
+  /* ── 手势页①：滑动多选 ────────────────────────────────────────────── */
+  var swipeList = document.getElementById('swipeList');
+  for (var i = 1; i <= 5; i++) {
+    var row = document.createElement('div');
+    row.className = 'swipe-row';
+    row.innerHTML = '<span class="swipe-box"></span>项目 ' + i + ' —— 按住向下拖再松开';
+    swipeList.appendChild(row);
+  }
+
+  var swipe = null;
+  swipeList.addEventListener('pointerdown', function (e) {
+    var row = e.target.closest('.swipe-row');
+    if (!row || swipe) { return; }
+    row.setPointerCapture(e.pointerId);
+    swipe = { row: row, y0: e.clientY, revealed: false };
+  });
+
+  swipeList.addEventListener('pointermove', function (e) {
+    if (!swipe) { return; }
+    if (e.clientY - swipe.y0 > 24 && !swipe.revealed) {
+      swipe.revealed = true;
+      A.swipeReveal(swipe.row, { top: '25px', left: '0px' });   // 官方默认偏移就是 25px
+      note('swipeReveal', '向下让出 25px，露出选择框');
+    }
+  });
+
+  swipeList.addEventListener('pointerup', function (e) {
+    if (!swipe) { return; }
+    var row = swipe.row;
+    var dy = e.clientY - swipe.y0;
+    var box = row.querySelector('.swipe-box');
+    var selected = row.classList.contains('selected');
+    var commit = swipe.revealed && dy > 60;
+    var isTap = !swipe.revealed && Math.abs(dy) < 5;   // 单击：无手势环境下的备用路径，走同一对官方动画
+    swipe = null;
+
+    if (commit || isTap) {
+      if (selected) {
+        A.swipeDeselect(row, box);
+        row.classList.remove('selected');
+        box.textContent = '';
+        note('swipeDeselect', (isTap ? '单击取消（备用路径）· ' : '') + '对象滑回原位 300ms + 选择框淡出 300ms');
+      } else {
+        A.swipeSelect(row, box);
+        row.classList.add('selected');
+        box.textContent = '✓';
+        note('swipeSelect', (isTap ? '单击选中（备用路径）· ' : '') + '对象滑回原位 300ms + 选择框淡入 300ms');
+      }
+    } else if (selected) {
+      A.swipeSelect(row, box);        // 滑回原位，保持选中
+      note('swipeSelect', '未过阈值：滑回原位并保持选中');
+    } else {
+      A.swipeDeselect(row, box);      // 滑回原位，选择框保持隐藏
+      note('swipeDeselect', '未过阈值：滑回原位');
+    }
+  });
+
+  /* ── 手势页②：拖拽落点指示 ────────────────────────────────────────── */
+  var strip = document.getElementById('strip');
+  for (var s = 1; s <= 5; s++) {
+    var it = document.createElement('div');
+    it.className = 'strip-item';
+    it.textContent = '#' + s;
+    strip.appendChild(it);
+  }
+
+  var drag = null;
+  function stripItems() { return [].slice.call(strip.children); }
+
+  strip.addEventListener('pointerdown', function (e) {
+    var item = e.target.closest('.strip-item');
+    if (!item || drag) { return; }
+    e.preventDefault();
+    strip.setPointerCapture(e.pointerId);
+
+    var nodes = stripItems();
+    var rect = strip.getBoundingClientRect();
+    var cell = nodes[1].getBoundingClientRect().left - nodes[0].getBoundingClientRect().left;
+    drag = { item: item, nodes: nodes, cell: cell, left: rect.left, pair: [], ready: false, home: item.getBoundingClientRect().left };
+
+    var others = nodes.filter(function (x) { return x !== item; });
+    A.dragSourceStart(item, others).then(function () { if (drag) { drag.ready = true; } });
+    note('dragSourceStart', '源 scale(1.05) + 0.65 透明，其余项 scale(0.95)');
+  });
+
+  strip.addEventListener('pointermove', function (e) {
+    if (!drag) { return; }
+    var x = e.clientX - drag.left;
+    var idx = Math.max(0, Math.min(drag.nodes.length, Math.round(x / drag.cell)));
+    var left = idx - 1 >= 0 && drag.nodes[idx - 1] !== drag.item ? drag.nodes[idx - 1] : null;
+    var right = idx < drag.nodes.length && drag.nodes[idx] !== drag.item ? drag.nodes[idx] : null;
+    var pair = [left, right].filter(Boolean);
+
+    var changed = pair.length !== drag.pair.length ||
+      pair.some(function (p, i) { return p !== drag.pair[i]; });
+
+    if (changed) {
+      if (drag.pair.length) { A.dragBetweenLeave(drag.pair); }
+      drag.pair = pair;
+      if (left) { A.dragBetweenEnter(left, { top: '0px', left: '-40px' }); }
+      if (right) { A.dragBetweenEnter(right, { top: '0px', left: '40px' }); }
+      if (pair.length) { note('dragBetweenEnter', pair.length + ' 侧让位（200ms）'); }
+    }
+
+    if (drag.ready) {
+      var dx = Math.round(e.clientX - (drag.left + drag.home) - 31);
+      drag.item.style.transform = 'translate(' + dx + 'px, 0px) scale(1.05)';
+    }
+  });
+
+  function endDrag() {
+    if (!drag) { return; }
+    var d = drag;
+    drag = null;
+    A.dragSourceEnd(d.item);
+    if (d.pair.length) { A.dragBetweenLeave(d.pair); note('dragBetweenLeave', '间隙合上（200ms）'); }
+    setTimeout(function () {
+      d.nodes.forEach(function (node) {
+        if (node !== d.item) { node.style.transform = ''; }
+      });
+    }, 260);
+  }
+  strip.addEventListener('pointerup', endDrag);
+  strip.addEventListener('pointercancel', endDrag);
+
+  /* ── 官方调试开关 ──────────────────────────────────────────────────── */
+  document.getElementById('slow').addEventListener('change', function (e) { A.slow = e.target.checked; });
+  document.getElementById('fast').addEventListener('change', function (e) { A.fast = e.target.checked; });
+  document.getElementById('off').addEventListener('change', function (e) { A.enabled = !e.target.checked; });
+
+  /* ── 首屏入场（KIT.md 规则 21）：打开页面就播一次官方分批进场 ────────────
+     与模板同一套写法：`data-enter-on-load` 标记 + `contentOffset(false)`（**从右往左滑 100px**，
+     与页面转场同一套偏移；要退回官方默认的"下移 28px"就把第二个参数去掉），
+     分批用页面自己那些 data-batch（0/83/166ms）。不经过 transitionTo（没有出场页、也不改 z-index）。 */
+  var bootPage = document.querySelector('.page[data-enter-on-load]');
+  if (bootPage) {
+    var bootBatches = pageBatches(bootPage);
+    if (bootBatches.length) { A.enterPage(bootBatches, contentOffset(false)); }
+    A.fadeIn(bootPage.querySelectorAll('.win-controls'));
+    note('首屏入场', 'enterPage 从右往左滑 ' + STAGGER_SLIDE + 'px→0 · 1000ms + 淡入 170ms · 交错 83ms');
+  }
+})();
+</script>
+</body>
+</html>

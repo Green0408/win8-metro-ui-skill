@@ -1,0 +1,100 @@
+/*!
+ * win8-animation-library.css — Windows 8 / WinJS 官方关键帧与过渡值
+ *
+ * 关键帧逐条取自 WinJS 仓库 src/less/animation-library.less（MIT 许可），
+ * 已去掉当年为 IE10 / 旧 WebKit 写的前缀副本，保留现代标准语法。
+ * 末尾的“官方控件过渡值”取自 src/less/styles-listview.less 等文件。
+ */
+
+/* ── 官方关键帧（名称保持 WinJS-* 原样）───────────────────────────────── */
+
+/* 触发一次重排的无副作用关键帧，WinJS 用它检测插入完成 */
+@keyframes WinJS-node-inserted { from { outline-color: #000; } to { outline-color: #001; } }
+
+@keyframes WinJS-opacity-in  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes WinJS-opacity-out { from { opacity: 1; } to { opacity: 0; } }
+
+@keyframes WinJS-scale-up   { from { transform: scale(0.85); } to { transform: scale(1); } }
+@keyframes WinJS-scale-down { from { transform: scale(1); } to { transform: scale(0.85); } }
+
+@keyframes WinJS-default-remove     { from { transform: translateX( 11px); } to { transform: none; } }
+@keyframes WinJS-default-remove-rtl { from { transform: translateX(-11px); } to { transform: none; } }
+@keyframes WinJS-default-apply      { from { transform: none; } to { transform: translateX( 11px); } }
+@keyframes WinJS-default-apply-rtl  { from { transform: none; } to { transform: translateX(-11px); } }
+
+/* AppBar：屏幕底边 UI 从上方 -70px 滑入 */
+@keyframes WinJS-showEdgeUI { from { transform: translateY(-70px); } to { transform: none; } }
+@keyframes WinJS-hideEdgeUI { from { transform: none; } to { transform: translateY(-70px); } }
+
+/* 设置/搜索面板：右侧 364px 滑入 */
+@keyframes WinJS-showPanel     { from { transform: translateX( 364px); } to { transform: none; } }
+@keyframes WinJS-showPanel-rtl { from { transform: translateX(-364px); } to { transform: none; } }
+@keyframes WinJS-hidePanel     { from { transform: none; } to { transform: translateX( 364px); } }
+@keyframes WinJS-hidePanel-rtl { from { transform: none; } to { transform: translateX(-364px); } }
+
+/* 弹出菜单：从下方 50px 升起 */
+@keyframes WinJS-showPopup { from { transform: translateY(50px); } to { transform: none; } }
+
+@keyframes WinJS-dragSourceEnd     { from { transform: translateX( 11px) scale(1.05); } to { transform: none; } }
+@keyframes WinJS-dragSourceEnd-rtl { from { transform: translateX(-11px) scale(1.05); } to { transform: none; } }
+
+/* 内容进场：下移 28px 归位 */
+@keyframes WinJS-enterContent { from { transform: translateY(28px); } to { transform: none; } }
+@keyframes WinJS-enterPage    { from { transform: translateY(28px); } to { transform: none; } }
+@keyframes WinJS-exit         { from { transform: none; } to { transform: none; } }
+
+/* 磁贴徽章：下移 24px 归位 */
+@keyframes WinJS-updateBadge { from { transform: translateY(24px); } to { transform: none; } }
+
+/* ── 官方控件过渡值（原样摘自 WinJS 的 styles-listview.less）───────────── */
+
+:root {
+    /* WinJS.UI.Animation 主力缓动曲线 */
+    --winjs-ease-standard: cubic-bezier(0.1, 0.9, 0.2, 1);
+    /* 多选模式下磁贴让位时使用 */
+    --winjs-ease-selection: cubic-bezier(0.17, 0.79, 0.215, 1.0025);
+    --winjs-dur-selection: 250ms;
+    --winjs-dur-drag-opacity: 167ms;
+    --winjs-dur-drag-transform: 220ms;
+}
+
+/* 官方：磁贴内容框的位移过渡 220ms */
+.win-listview .win-itembox {
+    transition: transform var(--winjs-ease-standard) var(--winjs-dur-drag-transform);
+}
+
+/* 官方：拖拽源半透明（opacity 167ms + transform 220ms，两条同时生效） */
+.win-listview .win-itembox.win-dragsource,
+.win-itemcontainer .win-itembox.win-dragsource {
+    opacity: 0.5;
+    transition: opacity var(--winjs-ease-standard) var(--winjs-dur-drag-opacity),
+                transform var(--winjs-ease-standard) var(--winjs-dur-drag-transform);
+}
+
+/* 官方：多选模式下磁贴平移 40px 让出复选框位置，250ms */
+.win-listview.win-selectionstylefilled .win-surface.win-selectionmode .win-item {
+    transition: transform var(--winjs-ease-selection) var(--winjs-dur-selection);
+    transform: translate(40px, 0px);
+}
+.win-listview.win-rtl.win-selectionstylefilled .win-surface.win-selectionmode .win-item {
+    transition: transform var(--winjs-ease-selection) var(--winjs-dur-selection);
+    transform: translate(-40px, 0px);
+}
+.win-listview.win-selectionstylefilled .win-surface.win-hidingselectionmode .win-item {
+    transition: transform var(--winjs-ease-selection) var(--winjs-dur-selection);
+    transform: none;
+}
+
+/* 直接套用官方关键帧的工具类（时长取自 Animation.js 中对应动画） */
+.win-anim-enter-page    { animation: WinJS-enterPage    1000ms var(--winjs-ease-standard) both; }
+.win-anim-enter-content { animation: WinJS-enterContent  550ms var(--winjs-ease-standard) both; }
+.win-anim-fade-in       { animation: WinJS-opacity-in    250ms linear both; }
+.win-anim-fade-out      { animation: WinJS-opacity-out   167ms linear both; }
+.win-anim-show-edge-ui  { animation: WinJS-showEdgeUI    367ms var(--winjs-ease-standard) both; }
+.win-anim-hide-edge-ui  { animation: WinJS-hideEdgeUI    367ms var(--winjs-ease-standard) both; }
+.win-anim-show-panel    { animation: WinJS-showPanel     550ms var(--winjs-ease-standard) both; }
+.win-anim-hide-panel    { animation: WinJS-hidePanel     550ms var(--winjs-ease-standard) both; }
+.win-anim-show-popup    { animation: WinJS-showPopup     367ms var(--winjs-ease-standard) both; }
+.win-anim-update-badge  { animation: WinJS-updateBadge  1333ms var(--winjs-ease-standard) both; }
+.win-anim-scale-up      { animation: WinJS-scale-up      120ms var(--winjs-ease-standard) both; }
+.win-anim-scale-down    { animation: WinJS-scale-down    120ms cubic-bezier(0.11, 0.5, 0.24, .96) both; }

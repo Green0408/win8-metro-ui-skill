@@ -1,0 +1,1576 @@
+[
+  {
+    "name": "getOffset",
+    "kind": "api",
+    "summary": "",
+    "params": "",
+    "signature": "i",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "350",
+        "delay": "0",
+        "timing": "curve",
+        "from": "translateCallback(startOffsetArray)",
+        "to": "translateCallback(endOffsetArray)"
+      },
+      {
+        "keyframe": "-",
+        "property": "\"opacity\"",
+        "duration": "350",
+        "delay": "0",
+        "timing": "fadeIn ? \"steps(1, start)\" : \"steps(1, end)\"",
+        "from": "fadeIn ? 0 : 1",
+        "to": "fadeIn ? 1 : 0"
+      }
+    ]
+  },
+  {
+    "name": "ExpandAnimation",
+    "kind": "class",
+    "summary": "",
+    "params": "",
+    "signature": "",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "\"WinJS-opacity-in\"",
+        "property": "\"opacity\"",
+        "duration": "167",
+        "delay": "this.affectedArray.length > 0 ? 200 : 0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "0",
+        "to": "1"
+      },
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "367",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "-",
+        "to": "\"\""
+      }
+    ]
+  },
+  {
+    "name": "CollapseAnimation",
+    "kind": "class",
+    "summary": "",
+    "params": "",
+    "signature": "",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "\"WinJS-opacity-out\"",
+        "property": "\"opacity\"",
+        "duration": "167",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "1",
+        "to": "0"
+      },
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "367",
+        "delay": "this.hiddenArray.length > 0 ? 167 : 0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "-",
+        "to": "\"\""
+      }
+    ]
+  },
+  {
+    "name": "RepositionAnimation",
+    "kind": "class",
+    "summary": "",
+    "params": "",
+    "signature": "",
+    "delegates_to": [
+      {
+        "fn": "animTranslate2DTransform",
+        "args": "this.elementArray, this.offsetArray, { property: transformNames.cssName, delay: staggerDelay(0, 33, 1, 250), duration: 367, timing: \"cubic-bezier(0.1, 0.9, 0.2, 1)\", to: \"\" }"
+      }
+    ],
+    "transitions": [
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "367",
+        "delay": "staggerDelay(0, 33, 1, 250)",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "-",
+        "to": "\"\""
+      }
+    ]
+  },
+  {
+    "name": "AddToListAnimation",
+    "kind": "class",
+    "summary": "",
+    "params": "",
+    "signature": "",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "\"WinJS-scale-up\"",
+        "property": "transformNames.cssName",
+        "duration": "120",
+        "delay": "delay",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "\"scale(0.85)\"",
+        "to": "\"none\""
+      },
+      {
+        "keyframe": "\"WinJS-opacity-in\"",
+        "property": "\"opacity\"",
+        "duration": "120",
+        "delay": "delay",
+        "timing": "\"linear\"",
+        "from": "0",
+        "to": "1"
+      },
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "400",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "-",
+        "to": "\"\""
+      }
+    ]
+  },
+  {
+    "name": "DeleteFromListAnimation",
+    "kind": "class",
+    "summary": "",
+    "params": "",
+    "signature": "",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "\"WinJS-scale-down\"",
+        "property": "transformNames.cssName",
+        "duration": "120",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.11, 0.5, 0.24, .96)\"",
+        "from": "\"none\"",
+        "to": "\"scale(0.85)\""
+      },
+      {
+        "keyframe": "\"WinJS-opacity-out\"",
+        "property": "\"opacity\"",
+        "duration": "120",
+        "delay": "0",
+        "timing": "\"linear\"",
+        "from": "1",
+        "to": "0"
+      },
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "400",
+        "delay": "this.deletedArray.length > 0 ? 60 : 0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "-",
+        "to": "\"\""
+      }
+    ]
+  },
+  {
+    "name": "_UpdateListAnimation",
+    "kind": "class",
+    "summary": "",
+    "params": "",
+    "signature": "",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "keyframeCallbackAnimate(this.deletedOffsetArray, \"WinJS-scale-down\")",
+        "property": "transformNames.cssName",
+        "duration": "120",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.11, 0.5, 0.24, .96)\"",
+        "from": "translateCallbackAnimate(this.deletedOffsetArray)",
+        "to": "translateCallbackAnimate(this.deletedOffsetArray, \"scale(0.85)\")"
+      },
+      {
+        "keyframe": "\"WinJS-opacity-out\"",
+        "property": "\"opacity\"",
+        "duration": "120",
+        "delay": "0",
+        "timing": "\"linear\"",
+        "from": "1",
+        "to": "0"
+      },
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "400",
+        "delay": "delay",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "-",
+        "to": "\"\""
+      },
+      {
+        "keyframe": "\"WinJS-scale-up\"",
+        "property": "transformNames.cssName",
+        "duration": "120",
+        "delay": "delay",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "\"scale(0.85)\"",
+        "to": "\"none\""
+      },
+      {
+        "keyframe": "\"WinJS-opacity-in\"",
+        "property": "\"opacity\"",
+        "duration": "120",
+        "delay": "delay",
+        "timing": "\"linear\"",
+        "from": "0",
+        "to": "1"
+      }
+    ]
+  },
+  {
+    "name": "AddToSearchListAnimation",
+    "kind": "class",
+    "summary": "",
+    "params": "",
+    "signature": "",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "\"WinJS-opacity-in\"",
+        "property": "\"opacity\"",
+        "duration": "117",
+        "delay": "this.affectedArray.length > 0 ? 240 : 0",
+        "timing": "\"linear\"",
+        "from": "0",
+        "to": "1"
+      },
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "400",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "-",
+        "to": "\"\""
+      }
+    ]
+  },
+  {
+    "name": "DeleteFromSearchListAnimation",
+    "kind": "class",
+    "summary": "",
+    "params": "",
+    "signature": "",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "\"WinJS-opacity-out\"",
+        "property": "\"opacity\"",
+        "duration": "93",
+        "delay": "0",
+        "timing": "\"linear\"",
+        "from": "1",
+        "to": "0"
+      },
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "400",
+        "delay": "this.deletedArray.length > 0 ? 60 : 0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "-",
+        "to": "\"\""
+      }
+    ]
+  },
+  {
+    "name": "PeekAnimation",
+    "kind": "class",
+    "summary": "",
+    "params": "",
+    "signature": "",
+    "delegates_to": [
+      {
+        "fn": "animTranslate2DTransform",
+        "args": "this.elementArray, this.offsetArray, { property: transformNames.cssName, delay: 0, duration: 2000, timing: \"cubic-bezier(0.1, 0.9, 0.2, 1)\", to: \"\" }"
+      }
+    ],
+    "transitions": [
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "2000",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "-",
+        "to": "\"\""
+      },
+      {
+        "keyframe": "-",
+        "property": "",
+        "duration": "350",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "-",
+        "to": "-"
+      },
+      {
+        "keyframe": "-",
+        "property": "",
+        "duration": "120",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "-",
+        "to": "-"
+      },
+      {
+        "keyframe": "-",
+        "property": "",
+        "duration": "args.duration === undefined ? defaultTransition.duration : args.duration",
+        "delay": "0",
+        "timing": "args.timing === undefined ? defaultTransition.timing : args.timing",
+        "from": "-",
+        "to": "-"
+      },
+      {
+        "keyframe": "-",
+        "property": "",
+        "duration": "args.duration",
+        "delay": "0",
+        "timing": "args.timing",
+        "from": "-",
+        "to": "-"
+      }
+    ]
+  },
+  {
+    "name": "createExpandAnimation",
+    "kind": "api",
+    "summary": "Creates an expand animation.",
+    "params": "",
+    "signature": "revealed, affected",
+    "delegates_to": [],
+    "transitions": []
+  },
+  {
+    "name": "createCollapseAnimation",
+    "kind": "api",
+    "summary": "Creates a collapse animation.",
+    "params": "",
+    "signature": "hidden, affected",
+    "delegates_to": [],
+    "transitions": []
+  },
+  {
+    "name": "createRepositionAnimation",
+    "kind": "api",
+    "summary": "Creates a reposition animation.",
+    "params": "",
+    "signature": "element",
+    "delegates_to": [],
+    "transitions": []
+  },
+  {
+    "name": "fadeIn",
+    "kind": "api",
+    "summary": "Execute a fade-in animation.",
+    "params": "",
+    "signature": "shown",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "-",
+        "property": "\"opacity\"",
+        "duration": "250",
+        "delay": "0",
+        "timing": "\"linear\"",
+        "from": "0",
+        "to": "1"
+      }
+    ]
+  },
+  {
+    "name": "fadeOut",
+    "kind": "api",
+    "summary": "Execute a fade-out animation.",
+    "params": "",
+    "signature": "hidden",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "-",
+        "property": "\"opacity\"",
+        "duration": "167",
+        "delay": "0",
+        "timing": "\"linear\"",
+        "from": "-",
+        "to": "0"
+      }
+    ]
+  },
+  {
+    "name": "createAddToListAnimation",
+    "kind": "api",
+    "summary": "Creates an animation for adding to a list.",
+    "params": "",
+    "signature": "added, affected",
+    "delegates_to": [],
+    "transitions": []
+  },
+  {
+    "name": "createDeleteFromListAnimation",
+    "kind": "api",
+    "summary": "Crestes an animation for deleting from a list.",
+    "params": "",
+    "signature": "deleted, remaining",
+    "delegates_to": [],
+    "transitions": []
+  },
+  {
+    "name": "_createUpdateListAnimation",
+    "kind": "api",
+    "summary": "",
+    "params": "",
+    "signature": "added, deleted, affected",
+    "delegates_to": [],
+    "transitions": []
+  },
+  {
+    "name": "createAddToSearchListAnimation",
+    "kind": "api",
+    "summary": "Creates an animation for adding to a list of search results.",
+    "params": "",
+    "signature": "added, affected",
+    "delegates_to": [],
+    "transitions": []
+  },
+  {
+    "name": "createDeleteFromSearchListAnimation",
+    "kind": "api",
+    "summary": "Creates an animation for deleting from a list of search results.",
+    "params": "",
+    "signature": "deleted, remaining",
+    "delegates_to": [],
+    "transitions": []
+  },
+  {
+    "name": "showEdgeUI",
+    "kind": "api",
+    "summary": "Slides an element or elements into position at the edge of the screen.",
+    "params": "",
+    "signature": "element, offset, options",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "offsetArray.keyframe",
+        "property": "transformNames.cssName",
+        "duration": "367",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "isTransition ? translateCallback(offsetArray) : (offsetArray.keyframe || translateCallback(offsetArray))",
+        "to": "\"none\""
+      }
+    ]
+  },
+  {
+    "name": "showPanel",
+    "kind": "api",
+    "summary": "Slides an element or elements into position at the edge of the screen.",
+    "params": "",
+    "signature": "element, offset",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "offsetArray.keyframe",
+        "property": "transformNames.cssName",
+        "duration": "550",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "offsetArray.keyframe || translateCallback(offsetArray)",
+        "to": "\"none\""
+      }
+    ]
+  },
+  {
+    "name": "hideEdgeUI",
+    "kind": "api",
+    "summary": "Slides an element or elements at the edge of the screen out of view.",
+    "params": "",
+    "signature": "element, offset, options",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "offsetArray.keyframe",
+        "property": "transformNames.cssName",
+        "duration": "367",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "\"none\"",
+        "to": "isTransition ? translateCallback(offsetArray) : (offsetArray.keyframe || translateCallback(offsetArray))"
+      }
+    ]
+  },
+  {
+    "name": "hidePanel",
+    "kind": "api",
+    "summary": "Slides an element or elements at the edge of the screen out of view.",
+    "params": "",
+    "signature": "element, offset",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "offsetArray.keyframe",
+        "property": "transformNames.cssName",
+        "duration": "550",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "\"none\"",
+        "to": "offsetArray.keyframe || translateCallback(offsetArray)"
+      }
+    ]
+  },
+  {
+    "name": "showPopup",
+    "kind": "api",
+    "summary": "Displays an element or elements in the style of a popup.",
+    "params": "",
+    "signature": "element, offset",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "\"WinJS-opacity-in\"",
+        "property": "\"opacity\"",
+        "duration": "83",
+        "delay": "83",
+        "timing": "\"linear\"",
+        "from": "0",
+        "to": "1"
+      },
+      {
+        "keyframe": "offsetArray.keyframe",
+        "property": "transformNames.cssName",
+        "duration": "367",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "offsetArray.keyframe || translateCallback(offsetArray)",
+        "to": "\"none\""
+      }
+    ]
+  },
+  {
+    "name": "hidePopup",
+    "kind": "api",
+    "summary": "Removes a popup from the screen.",
+    "params": "",
+    "signature": "element",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "\"WinJS-opacity-out\"",
+        "property": "\"opacity\"",
+        "duration": "83",
+        "delay": "0",
+        "timing": "\"linear\"",
+        "from": "1",
+        "to": "0"
+      }
+    ]
+  },
+  {
+    "name": "pointerDown",
+    "kind": "api",
+    "summary": "Execute a pointer-down animation.",
+    "params": "",
+    "signature": "element",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "167",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "-",
+        "to": "\"scale(0.975, 0.975)\""
+      }
+    ]
+  },
+  {
+    "name": "pointerUp",
+    "kind": "api",
+    "summary": "Execute a pointer-up animation.",
+    "params": "",
+    "signature": "element",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "167",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "-",
+        "to": "\"\""
+      }
+    ]
+  },
+  {
+    "name": "dragSourceStart",
+    "kind": "api",
+    "summary": "Execute a drag-start animation.",
+    "params": "",
+    "signature": "dragSource, affected",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "240",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "-",
+        "to": "\"scale(1.05)\""
+      },
+      {
+        "keyframe": "-",
+        "property": "\"opacity\"",
+        "duration": "240",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "-",
+        "to": "0.65"
+      },
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "240",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "-",
+        "to": "\"scale(0.95)\""
+      }
+    ]
+  },
+  {
+    "name": "dragSourceEnd",
+    "kind": "api",
+    "summary": "Execute a drag-end animation.",
+    "params": "",
+    "signature": "dragSource, offset, affected",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "500",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "-",
+        "to": "\"\" // this removes the scale"
+      },
+      {
+        "keyframe": "-",
+        "property": "\"opacity\"",
+        "duration": "500",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "-",
+        "to": "1"
+      },
+      {
+        "keyframe": "offsetArray.keyframe",
+        "property": "transformNames.cssName",
+        "duration": "500",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "offsetArray.keyframe || translateCallback(offsetArray, \"scale(1.05) \")",
+        "to": "\"none\""
+      },
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "500",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "-",
+        "to": "\"\""
+      }
+    ]
+  },
+  {
+    "name": "enterContent",
+    "kind": "api",
+    "summary": "Execute an enter-content animation.",
+    "params": "",
+    "signature": "incoming, offset, options",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "550",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "translateCallback(offsetArray)",
+        "to": "\"none\""
+      },
+      {
+        "keyframe": "-",
+        "property": "\"opacity\"",
+        "duration": "170",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "0",
+        "to": "1"
+      },
+      {
+        "keyframe": "offsetArray.keyframe",
+        "property": "transformNames.cssName",
+        "duration": "550",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "offsetArray.keyframe || translateCallback(offsetArray)",
+        "to": "\"none\""
+      },
+      {
+        "keyframe": "-",
+        "property": "\"opacity\"",
+        "duration": "170",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "0",
+        "to": "1"
+      }
+    ]
+  },
+  {
+    "name": "exitContent",
+    "kind": "api",
+    "summary": "Execute an exit-content animation.",
+    "params": "",
+    "signature": "outgoing, offset",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "offsetArray.keyframe",
+        "property": "transformNames.cssName",
+        "duration": "117",
+        "delay": "0",
+        "timing": "\"linear\"",
+        "from": "\"none\"",
+        "to": "offsetArray.keyframe || translateCallback(offsetArray)"
+      },
+      {
+        "keyframe": "-",
+        "property": "\"opacity\"",
+        "duration": "117",
+        "delay": "0",
+        "timing": "\"linear\"",
+        "from": "-",
+        "to": "0"
+      }
+    ]
+  },
+  {
+    "name": "dragBetweenEnter",
+    "kind": "api",
+    "summary": "Execute an animation which indicates that a dragged object",
+    "params": "",
+    "signature": "target, offset",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "200",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "-",
+        "to": "translateCallback(offsetArray, \"scale(0.95) \")"
+      }
+    ]
+  },
+  {
+    "name": "dragBetweenLeave",
+    "kind": "api",
+    "summary": "Execute an animation which indicates that a dragged object",
+    "params": "",
+    "signature": "target",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "200",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "-",
+        "to": "\"scale(0.95)\""
+      }
+    ]
+  },
+  {
+    "name": "swipeSelect",
+    "kind": "api",
+    "summary": "Slide a swipe-selected object back into position when the",
+    "params": "",
+    "signature": "selected, selection",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "300",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "-",
+        "to": "\"\""
+      },
+      {
+        "keyframe": "\"WinJS-opacity-in\"",
+        "property": "\"opacity\"",
+        "duration": "300",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "0",
+        "to": "1"
+      }
+    ]
+  },
+  {
+    "name": "swipeDeselect",
+    "kind": "api",
+    "summary": "Slide a swipe-deselected object back into position when the",
+    "params": "",
+    "signature": "deselected, selection",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "300",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "-",
+        "to": "\"\""
+      },
+      {
+        "keyframe": "\"WinJS-opacity-out\"",
+        "property": "\"opacity\"",
+        "duration": "300",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "1",
+        "to": "0"
+      }
+    ]
+  },
+  {
+    "name": "swipeReveal",
+    "kind": "api",
+    "summary": "Reveal an object as the result of a swipe, or slide the",
+    "params": "",
+    "signature": "target, offset",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "300",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "-",
+        "to": "translateCallback(offsetArray)"
+      }
+    ]
+  },
+  {
+    "name": "enterPage",
+    "kind": "api",
+    "summary": "Execute an enterPage animation.",
+    "params": "",
+    "signature": "element, offset",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "offsetArray.keyframe",
+        "property": "transformNames.cssName",
+        "duration": "1000",
+        "delay": "staggerDelay(0, 83, 1, 333)",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "offsetArray.keyframe || translateCallback(offsetArray)",
+        "to": "\"none\""
+      },
+      {
+        "keyframe": "-",
+        "property": "\"opacity\"",
+        "duration": "170",
+        "delay": "staggerDelay(0, 83, 1, 333)",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "0",
+        "to": "1"
+      }
+    ]
+  },
+  {
+    "name": "exitPage",
+    "kind": "api",
+    "summary": "Execute an exitPage animation.",
+    "params": "",
+    "signature": "outgoing, offset",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "offsetArray.keyframe",
+        "property": "transformNames.cssName",
+        "duration": "117",
+        "delay": "0",
+        "timing": "\"linear\"",
+        "from": "\"none\"",
+        "to": "offsetArray.keyframe || translateCallback(offsetArray)"
+      },
+      {
+        "keyframe": "-",
+        "property": "\"opacity\"",
+        "duration": "117",
+        "delay": "0",
+        "timing": "\"linear\"",
+        "from": "-",
+        "to": "0"
+      }
+    ]
+  },
+  {
+    "name": "crossFade",
+    "kind": "api",
+    "summary": "Execute a crossFade animation.",
+    "params": "",
+    "signature": "incoming, outgoing",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "-",
+        "property": "\"opacity\"",
+        "duration": "167",
+        "delay": "0",
+        "timing": "\"linear\"",
+        "from": "-",
+        "to": "1"
+      },
+      {
+        "keyframe": "-",
+        "property": "\"opacity\"",
+        "duration": "167",
+        "delay": "0",
+        "timing": "\"linear\"",
+        "from": "-",
+        "to": "0"
+      }
+    ]
+  },
+  {
+    "name": "createPeekAnimation",
+    "kind": "api",
+    "summary": "Creates a peek animation.",
+    "params": "",
+    "signature": "element",
+    "delegates_to": [],
+    "transitions": []
+  },
+  {
+    "name": "updateBadge",
+    "kind": "api",
+    "summary": "Execute an updateBadge animation.",
+    "params": "",
+    "signature": "incoming, offset",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "\"WinJS-opacity-in\"",
+        "property": "\"opacity\"",
+        "duration": "367",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "0",
+        "to": "1"
+      },
+      {
+        "keyframe": "offsetArray.keyframe",
+        "property": "transformNames.cssName",
+        "duration": "1333",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1, 0.9, 0.2, 1)\"",
+        "from": "offsetArray.keyframe || translateCallback(offsetArray)",
+        "to": "\"none\""
+      }
+    ]
+  },
+  {
+    "name": "turnstileForwardIn",
+    "kind": "api",
+    "summary": "Execute a turnstile forward in animation.",
+    "params": "",
+    "signature": "incomingElements",
+    "delegates_to": [
+      {
+        "fn": "animRotationTransform",
+        "args": "incomingElements, origins, [{ property: transformNames.cssName, delay: staggerDelay(0, 50, 1, 1000), duration: 300, timing: \"cubic-bezier(0.01,0.975,0.4775,0.9775)\", from: \"perspective(600px) rotateY(80deg)\", to: \"perspective(600px) rotateY(0deg)\" }, { property: \"opacity\", delay: staggerDelay(0, 50, 1, 1000), duration: 300, timing: \"cubic-bezier(0, 2, 0, 2)\", from: 0, to: 1, }]"
+      }
+    ],
+    "transitions": [
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "300",
+        "delay": "staggerDelay(0, 50, 1, 1000)",
+        "timing": "\"cubic-bezier(0.01,0.975,0.4775,0.9775)\"",
+        "from": "\"perspective(600px) rotateY(80deg)\"",
+        "to": "\"perspective(600px) rotateY(0deg)\""
+      },
+      {
+        "keyframe": "-",
+        "property": "\"opacity\"",
+        "duration": "300",
+        "delay": "staggerDelay(0, 50, 1, 1000)",
+        "timing": "\"cubic-bezier(0, 2, 0, 2)\"",
+        "from": "0",
+        "to": "1"
+      }
+    ]
+  },
+  {
+    "name": "turnstileForwardOut",
+    "kind": "api",
+    "summary": "Execute a turnstile forward out animation.",
+    "params": "",
+    "signature": "outgoingElements",
+    "delegates_to": [
+      {
+        "fn": "animRotationTransform",
+        "args": "outgoingElements, origins, [{ property: transformNames.cssName, delay: staggerDelay(0, 50, 1, 1000), duration: 128, timing: \"cubic-bezier(0.4925,0.01,0.7675,-0.01)\", from: \"perspective(600px) rotateY(0deg)\", to: \"perspective(600px) rotateY(-50deg)\", }, { property: \"opacity\", delay: staggerDelay(0, 50, 1, 1000), duration: 128, timing: \"cubic-bezier(1,-0.42,0.995,-0.425)\", from: 1, to: 0, }]"
+      }
+    ],
+    "transitions": [
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "128",
+        "delay": "staggerDelay(0, 50, 1, 1000)",
+        "timing": "\"cubic-bezier(0.4925,0.01,0.7675,-0.01)\"",
+        "from": "\"perspective(600px) rotateY(0deg)\"",
+        "to": "\"perspective(600px) rotateY(-50deg)\""
+      },
+      {
+        "keyframe": "-",
+        "property": "\"opacity\"",
+        "duration": "128",
+        "delay": "staggerDelay(0, 50, 1, 1000)",
+        "timing": "\"cubic-bezier(1,-0.42,0.995,-0.425)\"",
+        "from": "1",
+        "to": "0"
+      }
+    ]
+  },
+  {
+    "name": "turnstileBackwardIn",
+    "kind": "api",
+    "summary": "Execute a turnstile backwards in animation.",
+    "params": "",
+    "signature": "incomingElements",
+    "delegates_to": [
+      {
+        "fn": "animRotationTransform",
+        "args": "incomingElements, origins, [{ property: transformNames.cssName, delay: staggerDelay(0, 50, 1, 1000), duration: 300, timing: \"cubic-bezier(0.01,0.975,0.4775,0.9775)\", from: \"perspective(600px) rotateY(-50deg)\", to: \"perspective(600px) rotateY(0deg)\" }, { property: \"opacity\", delay: staggerDelay(0, 50, 1, 1000), duration: 300, timing: \"cubic-bezier(0, 2, 0, 2)\", from: 0, to: 1, }]"
+      }
+    ],
+    "transitions": [
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "300",
+        "delay": "staggerDelay(0, 50, 1, 1000)",
+        "timing": "\"cubic-bezier(0.01,0.975,0.4775,0.9775)\"",
+        "from": "\"perspective(600px) rotateY(-50deg)\"",
+        "to": "\"perspective(600px) rotateY(0deg)\""
+      },
+      {
+        "keyframe": "-",
+        "property": "\"opacity\"",
+        "duration": "300",
+        "delay": "staggerDelay(0, 50, 1, 1000)",
+        "timing": "\"cubic-bezier(0, 2, 0, 2)\"",
+        "from": "0",
+        "to": "1"
+      }
+    ]
+  },
+  {
+    "name": "turnstileBackwardOut",
+    "kind": "api",
+    "summary": "Execute a turnstile backward out animation.",
+    "params": "",
+    "signature": "outgoingElements",
+    "delegates_to": [
+      {
+        "fn": "animRotationTransform",
+        "args": "outgoingElements, origins, [{ property: transformNames.cssName, delay: staggerDelay(0, 50, 1, 1000), duration: 128, timing: \"cubic-bezier(0.4925,0.01,0.7675,-0.01)\", from: \"perspective(800px) rotateY(0deg)\", to: \"perspective(800px) rotateY(80deg)\", }, { property: \"opacity\", delay: staggerDelay(0, 50, 1, 1000), duration: 128, timing: \"cubic-bezier(1,-0.42,0.995,-0.425)\", from: 1, to: 0, }]"
+      }
+    ],
+    "transitions": [
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "128",
+        "delay": "staggerDelay(0, 50, 1, 1000)",
+        "timing": "\"cubic-bezier(0.4925,0.01,0.7675,-0.01)\"",
+        "from": "\"perspective(800px) rotateY(0deg)\"",
+        "to": "\"perspective(800px) rotateY(80deg)\""
+      },
+      {
+        "keyframe": "-",
+        "property": "\"opacity\"",
+        "duration": "128",
+        "delay": "staggerDelay(0, 50, 1, 1000)",
+        "timing": "\"cubic-bezier(1,-0.42,0.995,-0.425)\"",
+        "from": "1",
+        "to": "0"
+      }
+    ]
+  },
+  {
+    "name": "slideDown",
+    "kind": "api",
+    "summary": "Execute a slide down animation.",
+    "params": "",
+    "signature": "outgoingElements",
+    "delegates_to": [
+      {
+        "fn": "animRotationTransform",
+        "args": "outgoingElements, { ltr: \"\", rtl: \"\" }, [{ property: transformNames.cssName, delay: 0, duration: 250, timing: \"cubic-bezier(0.3825,0.0025,0.8775,-0.1075)\", from: \"translate(0px, 0px)\", to: \"translate(0px, 200px)\" }, { property: \"opacity\", delay: 0, duration: 250, timing: \"cubic-bezier(1,-0.42,0.995,-0.425)\", from: 1, to: 0 }]"
+      }
+    ],
+    "transitions": [
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "250",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.3825,0.0025,0.8775,-0.1075)\"",
+        "from": "\"translate(0px, 0px)\"",
+        "to": "\"translate(0px, 200px)\""
+      },
+      {
+        "keyframe": "-",
+        "property": "\"opacity\"",
+        "duration": "250",
+        "delay": "0",
+        "timing": "\"cubic-bezier(1,-0.42,0.995,-0.425)\"",
+        "from": "1",
+        "to": "0"
+      }
+    ]
+  },
+  {
+    "name": "slideUp",
+    "kind": "api",
+    "summary": "Execute a slide up animation.",
+    "params": "",
+    "signature": "incomingElements",
+    "delegates_to": [
+      {
+        "fn": "animRotationTransform",
+        "args": "incomingElements, { ltr: \"\", rtl: \"\" }, [{ property: transformNames.cssName, delay: 0, duration: 350, timing: \"cubic-bezier(0.17,0.79,0.215,1.0025)\", from: \"translate(0px, 200px)\", to: \"translate(0px, 0px)\" }, { property: \"opacity\", delay: staggerDelay(0, 34, 1, 1000), duration: 350, timing: \"cubic-bezier(0, 2, 0, 2)\", from: 0, to: 1, }]"
+      }
+    ],
+    "transitions": [
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "350",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.17,0.79,0.215,1.0025)\"",
+        "from": "\"translate(0px, 200px)\"",
+        "to": "\"translate(0px, 0px)\""
+      },
+      {
+        "keyframe": "-",
+        "property": "\"opacity\"",
+        "duration": "350",
+        "delay": "staggerDelay(0, 34, 1, 1000)",
+        "timing": "\"cubic-bezier(0, 2, 0, 2)\"",
+        "from": "0",
+        "to": "1"
+      }
+    ]
+  },
+  {
+    "name": "slideRightIn",
+    "kind": "api",
+    "summary": "Execute a slide in from left to right animation.",
+    "params": "",
+    "signature": "page, firstIncomingElements, secondIncomingElements, thirdIncomingElements",
+    "delegates_to": [
+      {
+        "fn": "animStaggeredSlide",
+        "args": "\"cubic-bezier(0.17,0.79,0.215,1.0025)\", -_Global.innerWidth, 0, true, page, firstIncomingElements, secondIncomingElements, thirdIncomingElements"
+      }
+    ],
+    "transitions": []
+  },
+  {
+    "name": "slideRightOut",
+    "kind": "api",
+    "summary": "Execute a slide out from left to right animation.",
+    "params": "",
+    "signature": "page, firstOutgoingElements, secondOutgoingElements, thirdOutgoingElements",
+    "delegates_to": [
+      {
+        "fn": "animStaggeredSlide",
+        "args": "\"cubic-bezier(0.3825,0.0025,0.8775,-0.1075)\", 0, _Global.innerWidth, false, page, firstOutgoingElements, secondOutgoingElements, thirdOutgoingElements"
+      }
+    ],
+    "transitions": []
+  },
+  {
+    "name": "slideLeftIn",
+    "kind": "api",
+    "summary": "Execute a slide in from right to left animation.",
+    "params": "",
+    "signature": "page, firstIncomingElements, secondIncomingElements, thirdIncomingElements",
+    "delegates_to": [
+      {
+        "fn": "animStaggeredSlide",
+        "args": "\"cubic-bezier(0.17,0.79,0.215,1.0025)\", _Global.innerWidth, 0, true, page, firstIncomingElements, secondIncomingElements, thirdIncomingElements"
+      }
+    ],
+    "transitions": []
+  },
+  {
+    "name": "slideLeftOut",
+    "kind": "api",
+    "summary": "Execute a slide out from right to left animation.",
+    "params": "",
+    "signature": "page, firstOutgoingElements, secondOutgoingElements, thirdOutgoingElements",
+    "delegates_to": [
+      {
+        "fn": "animStaggeredSlide",
+        "args": "\"cubic-bezier(0.3825,0.0025,0.8775,-0.1075)\", 0, -_Global.innerWidth, false, page, firstOutgoingElements, secondOutgoingElements, thirdOutgoingElements"
+      }
+    ],
+    "transitions": []
+  },
+  {
+    "name": "continuumForwardIn",
+    "kind": "api",
+    "summary": "Execute a continuum animation, scaling up the incoming page while scaling, rotating, and translating the incoming item.",
+    "params": "",
+    "signature": "incomingPage, incomingItemRoot, incomingItemContent",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "350",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.33, 0.18, 0.11, 1)\"",
+        "from": "\"scale(0.5, 0.5)\"",
+        "to": "\"scale(1.0, 1.0)\""
+      },
+      {
+        "keyframe": "-",
+        "property": "\"opacity\"",
+        "duration": "350",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0, 2, 0, 2)\"",
+        "from": "0",
+        "to": "1"
+      },
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "350",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.24,1.15,0.11,1.1575)\"",
+        "from": "\"translate(0px, 225px)\"",
+        "to": "\"translate(0px, 0px)\""
+      },
+      {
+        "keyframe": "-",
+        "property": "\"opacity\"",
+        "duration": "350",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0, 2, 0, 2)\"",
+        "from": "0",
+        "to": "1"
+      },
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "350",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0,0.62,0.8225,0.9625)\"",
+        "from": "\"rotateX(80deg) scale(1.5, 1.5)\"",
+        "to": "\"rotateX(0deg) scale(1.0, 1.0)\""
+      },
+      {
+        "keyframe": "-",
+        "property": "\"opacity\"",
+        "duration": "350",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0, 2, 0, 2)\"",
+        "from": "0",
+        "to": "1"
+      }
+    ]
+  },
+  {
+    "name": "continuumForwardOut",
+    "kind": "api",
+    "summary": "Execute a continuum animation, scaling down the outgoing page while scaling, rotating, and translating the outgoing item.",
+    "params": "",
+    "signature": "outgoingPage, outgoingItem",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "120",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.3825,0.0025,0.8775,-0.1075)\"",
+        "from": "\"scale(1.0, 1.0)\"",
+        "to": "\"scale(1.1, 1.1)\""
+      },
+      {
+        "keyframe": "-",
+        "property": "\"opacity\"",
+        "duration": "120",
+        "delay": "0",
+        "timing": "\"cubic-bezier(1,-0.42,0.995,-0.425)\"",
+        "from": "1",
+        "to": "0"
+      },
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "152",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.3825,0.0025,0.8775,-0.1075)\"",
+        "from": "\"rotateX(0deg) scale(1.0, 1.0) translate(0px, 0px)\"",
+        "to": "\"rotateX(80deg) scale(1.5, 1.5) translate(0px, 150px)\""
+      },
+      {
+        "keyframe": "-",
+        "property": "\"opacity\"",
+        "duration": "152",
+        "delay": "0",
+        "timing": "\"cubic-bezier(1,-0.42,0.995,-0.425)\"",
+        "from": "1",
+        "to": "0"
+      }
+    ]
+  },
+  {
+    "name": "continuumBackwardIn",
+    "kind": "api",
+    "summary": "Execute a continuum animation, scaling down the incoming page while scaling, rotating, and translating the incoming item.",
+    "params": "",
+    "signature": "incomingPage, incomingItem",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "200",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.33, 0.18, 0.11, 1)\"",
+        "from": "\"scale(1.25, 1.25)\"",
+        "to": "\"scale(1.0, 1.0)\""
+      },
+      {
+        "keyframe": "-",
+        "property": "\"opacity\"",
+        "duration": "200",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0, 2, 0, 2)\"",
+        "from": "0",
+        "to": "1"
+      },
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "250",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.2975, 0.7325, 0.4725, 0.99)\"",
+        "from": "\"rotateX(80deg) translate(0px, -100px)\"",
+        "to": "\"rotateX(0deg) translate(0px, 0px)\""
+      },
+      {
+        "keyframe": "-",
+        "property": "\"opacity\"",
+        "duration": "250",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0, 2, 0, 2)\"",
+        "from": "0",
+        "to": "1"
+      }
+    ]
+  },
+  {
+    "name": "continuumBackwardOut",
+    "kind": "api",
+    "summary": "Execute a continuum animation, scaling down the outgoing page while fading it out.",
+    "params": "",
+    "signature": "outgoingPage",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "167",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.3825,0.0025,0.8775,-0.1075)\"",
+        "from": "\"scale(1.0, 1.0)\"",
+        "to": "\"scale(0.5, 0.5)\""
+      },
+      {
+        "keyframe": "-",
+        "property": "\"opacity\"",
+        "duration": "167",
+        "delay": "0",
+        "timing": "\"cubic-bezier(1,-0.42,0.995,-0.425)\"",
+        "from": "1",
+        "to": "0"
+      }
+    ]
+  },
+  {
+    "name": "drillInIncoming",
+    "kind": "api",
+    "summary": "Execute the incoming phase of the drill in animation, scaling up the incoming page while fading it in.",
+    "params": "",
+    "signature": "incomingPage",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "500",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1,0.9,0.2,1)\"",
+        "from": "\"scale(0.84)\"",
+        "to": "\"scale(1.0)\""
+      },
+      {
+        "keyframe": "-",
+        "property": "\"opacity\"",
+        "duration": "500",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1,0.9,0.2,1)\"",
+        "from": "0",
+        "to": "1"
+      }
+    ]
+  },
+  {
+    "name": "drillInOutgoing",
+    "kind": "api",
+    "summary": "Execute the outgoing phase of the drill in animation, scaling up the outgoing page while fading it out.",
+    "params": "",
+    "signature": "outgoingPage",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "233",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1,0.9,0.2,1)\"",
+        "from": "\"scale(1.0)\"",
+        "to": "\"scale(1.29)\""
+      },
+      {
+        "keyframe": "-",
+        "property": "\"opacity\"",
+        "duration": "233",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1,0.9,0.2,1)\"",
+        "from": "1",
+        "to": "0"
+      }
+    ]
+  },
+  {
+    "name": "drillOutIncoming",
+    "kind": "api",
+    "summary": "Execute the incoming phase of the drill out animation, scaling down the incoming page while fading it in.",
+    "params": "",
+    "signature": "incomingPage",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "500",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1,0.9,0.2,1)\"",
+        "from": "\"scale(1.29)\"",
+        "to": "\"scale(1.0)\""
+      },
+      {
+        "keyframe": "-",
+        "property": "\"opacity\"",
+        "duration": "500",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1,0.9,0.2,1)\"",
+        "from": "0",
+        "to": "1"
+      }
+    ]
+  },
+  {
+    "name": "drillOutOutgoing",
+    "kind": "api",
+    "summary": "Execute the outgoing phase of the drill out animation, scaling down the outgoing page while fading it out.",
+    "params": "",
+    "signature": "outgoingPage",
+    "delegates_to": [],
+    "transitions": [
+      {
+        "keyframe": "-",
+        "property": "transformNames.cssName",
+        "duration": "233",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1,0.9,0.2,1)\"",
+        "from": "\"scale(1.0)\"",
+        "to": "\"scale(0.84)\""
+      },
+      {
+        "keyframe": "-",
+        "property": "\"opacity\"",
+        "duration": "233",
+        "delay": "0",
+        "timing": "\"cubic-bezier(0.1,0.9,0.2,1)\"",
+        "from": "1",
+        "to": "0"
+      }
+    ]
+  },
+  {
+    "name": "createPageNavigationAnimations",
+    "kind": "api",
+    "summary": "Creates an exit and entrance animation to play for a page navigation given the current and incoming pages'",
+    "params": "",
+    "signature": "currentPreferredAnimation, nextPreferredAnimation, movingBackwards",
+    "delegates_to": [],
+    "transitions": []
+  }
+]
