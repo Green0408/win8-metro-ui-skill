@@ -139,6 +139,12 @@
      实测间距会变成 8px 外边距 + 4px 空格 ≈ 12px（开关那条注释里记过同样的坑）。 */
   .demo-check { display: flex; align-items: center; }
   .demo-check label { cursor: pointer; }              /* 官方没规定 label，补一条：点文字也能勾选 */
+  /* 单选组：与复选框同样的行内流问题（换行折成空格会把间距撑到 ~12px），统一用 flex 排 */
+  .demo-radios { display: grid; gap: 4px; }
+  .demo-radios > div { display: flex; align-items: center; }
+  .demo-radios label { cursor: pointer; }
+  /* 文本框 / 多行文本：官方只给了 .win-textbox 宽 296，多行没给宽度 —— 跟它对齐就行 */
+  .demo-textarea { width: 296px; }
 
   /* 弹出菜单：隐藏时必须退出命中测试，否则会吃掉下面元素的点击（KIT.md 规则 10） */
   #popup {
@@ -356,6 +362,34 @@
         <input type="checkbox" class="win-checkbox" id="demoCheck" checked>
         <label class="win-type-body" for="demoCheck">列表行显示删除按钮</label>
       </div>
+
+      <!-- 文本框 / 多行文本：官方固有元素 input.win-textbox、textarea.win-textarea
+           （2px 边框、min-height 28、方角；聚焦时官方是「白底黑字 + 强调色边框」，见 CSS 注释）。
+           官方只给单行框写了 width: 296px，多行没给 —— 这里对齐成同宽。 -->
+      <label class="win-type-body" for="demoName">方案名称</label>
+      <div><input type="text" class="win-textbox" id="demoName" value="周报归档" placeholder="例如：周报归档"></div>
+
+      <label class="win-type-body" for="demoNote">备注</label>
+      <div><textarea class="win-textarea demo-textarea" id="demoNote" rows="3"
+                     placeholder="最多 120 字，可留空"></textarea></div>
+
+      <!-- 单选：官方固有元素 input[type=radio].win-radio —— 与复选框同 20×20 / 2px 边框，
+           差别只是容器是 50% 圆；勾选态 = 强调色实心圆片（官方 less 只给 border-color，
+           圆心由系统画，本库按「实心圆片」复刻，见 win8-controls.css 里那条 ⚠ 说明）。
+           同组用同一个 name，读屏才会读成一组。 -->
+      <p class="win-type-body" id="demoInsertLabel" style="margin:12px 0 4px">新增项插到</p>
+      <div class="demo-radios" role="radiogroup" aria-labelledby="demoInsertLabel">
+        <div><input type="radio" class="win-radio" id="demoInsertTop" name="demoInsert" checked>
+             <label class="win-type-body" for="demoInsertTop">列表顶部</label></div>
+        <div><input type="radio" class="win-radio" id="demoInsertBottom" name="demoInsert">
+             <label class="win-type-body" for="demoInsertBottom">列表底部</label></div>
+      </div>
+
+      <!-- 链接：官方固有元素 a.win-link（强调色 + 下划线，hover 转 @baseMid）。
+           工具界面里的**次要操作**优先用链接，别一律做成按钮。 -->
+      <p class="win-type-body" style="margin:12px 0">
+        <a class="win-link" href="#" id="demoResetSort">恢复默认排序</a>
+      </p>
 
       <!-- 官方把滑块当**固有元素**样式化（input[type=range].win-slider），没有 Slider 控件类 -->
       <label class="win-type-body" for="demoSlider">行高 <span id="demoSliderValue">18</span> px</label>
@@ -915,10 +949,12 @@
 
   /* 下拉框（官方固有元素 select.win-dropdown）：选排序方式就真的给列表排序 */
   var demoSort = document.getElementById('demoSort');
+  var originalOrder = null;                 // 首次排序前记下原始顺序，供「恢复默认排序」用
   if (demoSort) {
     demoSort.addEventListener('change', function () {
       var rows = [].slice.call(listEl.children);
       if (demoSort.value === 'none') { return; }                 // 原始顺序不再记，这里只做升/降序
+      if (!originalOrder) { originalOrder = rows.slice(); }
       rows.sort(function (a, b) {
         var x = (a.dataset.title || ''), y = (b.dataset.title || '');
         return demoSort.value === 'asc' ? x.localeCompare(y, 'zh') : y.localeCompare(x, 'zh');
@@ -931,6 +967,22 @@
       rows.forEach(function (r) { listEl.appendChild(r); });
       anim.execute();
       status('列表排序 · ' + demoSort.selectedOptions[0].textContent + ' · createRepositionAnimation 367ms');
+    });
+  }
+
+  /* 链接（官方固有元素 a.win-link）：次要操作用链接，不走按钮。
+     这里做「恢复默认排序」——锚点默认会跳转，先 preventDefault；
+     排序本身也走官方 FLIP（createRepositionAnimation），不是瞬间跳。 */
+  var demoResetSort = document.getElementById('demoResetSort');
+  if (demoResetSort && demoSort) {
+    demoResetSort.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      demoSort.value = 'none';
+      if (!originalOrder) { return; }        // 还没排过序，本来就是默认顺序
+      var anim = A.createRepositionAnimation(originalOrder);
+      originalOrder.forEach(function (r) { listEl.appendChild(r); });
+      anim.execute();
+      status('已恢复默认排序 · createRepositionAnimation 367ms');
     });
   }
 
