@@ -461,15 +461,15 @@
 .win-dropdown-flat {
     -webkit-appearance: none; appearance: none;
     min-width: 0; max-width: none; min-height: 28px;
-    margin: 0; padding: 0 24px 0 0;                /* 右侧留位：箭头 12 + 与文字间距 8 + 右缘 4 */
+    margin: 0; padding: 0 20px 0 0;                /* 右侧留位：箭头 10 + 与文字间距 8 + 右缘 2 */
     border: 0; border-radius: 0;
     background-color: transparent;
     color: rgba(255, 255, 255, .76);               /* 实测 #C2C2C2 */
-    font-size: 20px; font-weight: 400; line-height: 1.2;
-    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23c2c2c2' stroke-width='1.5'/%3E%3C/svg%3E");
+    font-size: 15px; font-weight: 400; line-height: 1.333;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23c2c2c2' stroke-width='1.5'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 4px center;
-    background-size: 12px 7px;
+    background-size: 10px 6px;
     cursor: pointer;
 }
 /* 悬停/按下：文字与箭头**同时**变深浅。箭头是背景图，<select> 不能有伪元素，
@@ -478,59 +478,65 @@
     color: #fff;                                   /* @baseHigh */
     background-color: transparent;                 /* 盖掉 .win-dropdown:hover 的浅色底 */
     border-color: transparent;
-    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23ffffff' stroke-width='1.5'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23ffffff' stroke-width='1.5'/%3E%3C/svg%3E");
 }
 .win-dropdown-flat:active {
     color: rgba(255, 255, 255, .6);                /* @baseMid */
     background-color: transparent;
     border-color: transparent;
-    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='rgba(255,255,255,0.6)' stroke-width='1.5'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='rgba(255,255,255,0.6)' stroke-width='1.5'/%3E%3C/svg%3E");
 }
 .win-dropdown-flat:focus {
     outline: none; border: 0; color: #fff;
     background-color: transparent;
-    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23ffffff' stroke-width='1.5'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23ffffff' stroke-width='1.5'/%3E%3C/svg%3E");
 }
 .win-light .win-dropdown-flat {
     color: rgba(0, 0, 0, .7);
-    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23000000' stroke-opacity='.7' stroke-width='1.5'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23000000' stroke-opacity='.7' stroke-width='1.5'/%3E%3C/svg%3E");
 }
 .win-light .win-dropdown-flat:hover,
 .win-light .win-dropdown-flat:focus {
     color: #000;
     background-color: transparent;
-    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23000000' stroke-width='1.5'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23000000' stroke-width='1.5'/%3E%3C/svg%3E");
 }
 .win-light .win-dropdown-flat:active {
     color: rgba(0, 0, 0, .5);
     background-color: transparent;
-    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='rgba(0,0,0,0.5)' stroke-width='1.5'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='rgba(0,0,0,0.5)' stroke-width='1.5'/%3E%3C/svg%3E");
 }
 
 /* ── 浮层菜单触发器 .win-flyout-trigger + 菜单浮层 .win-menu ─────────────────
-   外观与原版「Collection」页截图一致（触发器和展开态都逐像素量过）：
+   外观照 Win8 原版「Collection」页截图，但**按本 KIT 的字号缩放**（原版是 TV/平板规格，
+   正文 20px；桌面工具用 body 15px，比值 0.75）：
 
-     触发器   字号 20 · 字色 #C2C2C2（≈@baseMediumHigh）· 箭头 12×7 细描边 · 文字↔箭头 8
-     菜单     条目高 56 · 文字左内边距 24 · 字色 #222（浅色主题）
-     选中项   应用强调色填充 + 反色文字（原版是绿底近白字，绿是那个应用的强调色）
-     底色     浅色应用 = 白底无边框；深色应用 = 深底 + 1px 描边（**跟应用主题走**，不是写死）
+     原版实测 → 本 KIT（×0.75，取 4 的倍数）
+       字号 20      → 15
+       条目高 56    → 40
+       左内边距 24  → 16
+       箭头 12×7    → 10×6
+       文字↔箭头 8  → 8（绝对值，不再缩）
+
+   选中项 = 应用强调色填充 + 反色文字；底色跟应用主题走（浅色应用白底无边框、深色应用深底+描边），
+   不是写死白色。
 
    ⚠ 触发器是 <button>，箭头用 ::after 画（`currentColor` 描边）—— 所以悬停时文字和箭头
      一起变深浅，不需要像 <select> 那样备三份 SVG。
-   ⚠ 菜单整体没有官方 less 可抄（raw/ 里没有 Menu 的源），几何全部来自截图实测；
+   ⚠ 菜单整体没有官方 less 可抄（raw/ 里没有 Menu 的源），几何来自截图实测 + 本 KIT 的缩放规则；
      强调色、深浅色由主题变量决定，不是抄原版那个绿。 */
 .win-flyout-trigger {
-    display: inline-flex; align-items: center; gap: 8px;   /* 文字↔箭头 8（实测） */
+    display: inline-flex; align-items: center; gap: 8px;   /* 文字↔箭头 8 */
     margin: 0; padding: 0;
     border: 0; border-radius: 0;
     background: transparent;
-    color: rgba(255, 255, 255, .76);                        /* 实测 #C2C2C2 */
-    font: inherit; font-size: 20px; font-weight: 400; line-height: 1.2;
+    color: rgba(255, 255, 255, .76);                        /* 原版实测 #C2C2C2 */
+    font: inherit; font-size: 15px; font-weight: 400; line-height: 1.333;
     cursor: pointer;
 }
 .win-flyout-trigger::after {
     content: "";
-    width: 8px; height: 8px; margin-top: -5px;              /* 12×7 视觉尺寸：8px 方块旋 45° */
+    width: 6px; height: 6px; margin-top: -4px;              /* 10×6 视觉尺寸：6px 方块旋 45° */
     border-right: 1.5px solid currentColor;
     border-bottom: 1.5px solid currentColor;
     transform: rotate(45deg);
@@ -546,7 +552,7 @@
 
 .win-menu {
     position: absolute; z-index: 20;
-    min-width: 220px; max-width: 420px;
+    min-width: 180px; max-width: 360px;
     margin: 0; padding: 0; list-style: none;
     /* 深色应用：深底 + 1px 描边（与模板既有 #popup 同一套） */
     background: #262626;
@@ -557,8 +563,8 @@
 .win-menu.open { visibility: visible; }
 .win-menu-item {
     display: flex; align-items: center;
-    height: 56px; padding: 0 24px;                          /* 实测：条目 56 · 左内边距 24 */
-    font-size: 20px; color: #fff;
+    height: 40px; padding: 0 16px;                          /* 原版 56/24 按 0.75 缩到 body 档 */
+    font-size: 15px; color: #fff;
     white-space: nowrap; cursor: pointer;
 }
 .win-menu-item:hover { background: rgba(255, 255, 255, .08); }
