@@ -1,4 +1,4 @@
-/*!
+﻿/*!
  * win8-controls.css — WinJS 官方固有控件样式（按钮 / 输入框 / 复选框 / 链接 / 字体斜坡）
  *
  * 数值逐条取自微软 MIT 许可的 WinJS 源码，未做主观调整：
@@ -444,6 +444,42 @@
 .win-dropdown option:checked { color: #fff; background-color: var(--win-accent); }
 .win-light .win-dropdown { color: #000; background-color: rgba(0, 0, 0, .2); border-color: rgba(0, 0, 0, .4); }
 .win-light .win-dropdown:hover { background-color: #f2f2f2; border-color: rgba(0, 0, 0, .6); }
+
+/* ── 扁平触发器 .win-dropdown-flat（"文字 + 细箭头"，Win8 应用里常见的那种筛选/排序下拉）──
+   来源：Win8 原版「Collection」页截图**逐像素实测**（本项目没有 WinJS Menu 的官方 less，
+   所以这里只复刻外观，不假装是官方控件数值）：
+
+     文字色        #C2C2C2（≈@baseMediumHigh 叠在应用底色上）
+     文字字高      16px → 字号 20px（与同页标签页文字同高）
+     箭头          12×7 的细描边 chevron（不是 .win-dropdown 那种实心三角，那来自 ::-ms-expand）
+     文字↔箭头     8px
+     两个触发器间距 44px
+
+   ⚠ 原版是 WinJS.UI.Menu 的**菜单触发器**（点开是菜单浮层）；这里仍是原生 <select>：
+     外观换成扁平样式，行为保持系统下拉 —— 键盘、读屏、移动端都不用重写。
+     要真正的菜单浮层，得等 KIT 补 Menu 组件（目前 raw/ 里没有它的官方源）。 */
+.win-dropdown-flat {
+    -webkit-appearance: none; appearance: none;
+    min-width: 0; max-width: none; min-height: 28px;
+    margin: 0; padding: 0 24px 0 0;                /* 右侧留位：箭头 12 + 与文字间距 8 + 右缘 4 */
+    border: 0; border-radius: 0;
+    background-color: transparent;
+    color: rgba(255, 255, 255, .76);               /* 实测 #C2C2C2 */
+    font-size: 20px; font-weight: 400; line-height: 1.2;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23c2c2c2' stroke-width='1.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 4px center;
+    background-size: 12px 7px;
+    cursor: pointer;
+}
+.win-dropdown-flat:hover { color: #fff; }           /* @baseHigh */
+.win-dropdown-flat:active { color: rgba(255, 255, 255, .6); }   /* @baseMid */
+.win-dropdown-flat:focus { outline: none; border: 0; color: #fff; }
+.win-light .win-dropdown-flat {
+    color: rgba(0, 0, 0, .7);
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23000000' stroke-opacity='.7' stroke-width='1.5'/%3E%3C/svg%3E");
+}
+.win-light .win-dropdown-flat:hover { color: #000; }
 
 /* ── 进度条（官方固有元素 progress.win-progress-bar）──────────────────────
    src/less/styles-intrinsic.less §Progress

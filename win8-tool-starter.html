@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
@@ -98,7 +98,7 @@
   /* 工具栏里的分组分隔：单选组和「新增」是同一件事，用 1px 竖线隔开 */
   .toolbar-sep { width: 1px; height: 16px; background: #3d3d3d; }
   /* 列表工具栏：排序 + 恢复默认排序。列表级操作就近放，不塞进属性面板 */
-  .list-tools { display: flex; align-items: center; gap: 12px; margin: 0 0 12px; }
+  .list-tools { display: flex; align-items: center; gap: 16px; margin: 0 0 12px; }
 
   /* 主区：列表 + 详情 */
   .workbench { display: grid; grid-template-columns: minmax(260px, 380px) 1fr; gap: 14px; align-items: start; }
@@ -308,16 +308,16 @@
     </div>
 
     <!-- 列表工具栏：排序是**列表级**操作，放在列表旁边而不是塞进「属性」面板。
-         下拉框 = 官方固有元素 select.win-dropdown；恢复默认排序用次要操作形态 a.win-link。
-         它和列表同批（同一个 data-batch 值 = 同一批次，一起进场），避免"列表滑、这一行不滑"。 -->
+         排序用**扁平触发器**（`.win-dropdown-flat`：文字 + 细箭头），照 Win8 原版「Collection」页
+         那种筛选/排序下拉的样子；它仍是原生 select，键盘/读屏/移动端行为不变。
+         「恢复默认排序」是次要动作，用链接。 -->
     <div class="list-tools" data-batch="2">
-      <label class="win-type-caption" for="demoSort">排序</label>
-      <select class="win-dropdown" id="demoSort">
+      <select class="win-dropdown win-dropdown-flat" id="demoSort" aria-label="排序方式">
         <option value="none">按添加顺序</option>
         <option value="asc">名称升序</option>
         <option value="desc">名称降序</option>
       </select>
-      <a class="win-link win-type-caption" href="#" id="demoResetSort">恢复默认排序</a>
+      <a class="win-link win-type-body" href="#" id="demoResetSort">恢复默认排序</a>
     </div>
 
     <div class="workbench">
@@ -411,6 +411,16 @@
       <!-- 官方把滑块当**固有元素**样式化（input[type=range].win-slider），没有 Slider 控件类 -->
       <label class="win-type-body" for="demoSlider">行高 <span id="demoSliderValue">18</span> px</label>
       <div><input type="range" class="win-slider" id="demoSlider" min="12" max="40" step="1" value="18"></div>
+
+      <!-- 下拉框：官方固有元素 select.win-dropdown（2px 边框、min-height 32px、方角、实心三角箭头来自官方
+           ::-ms-expand 的替身）。表单/设置里用这种带框的；列表工具栏那种筛选触发器用扁平的
+           .win-dropdown-flat（见 win8-controls.css）。 -->
+      <label class="win-type-body" for="demoFormat">导出格式</label>
+      <div><select class="win-dropdown" id="demoFormat">
+        <option value="mp4">MP4（H.264）</option>
+        <option value="webm">WebM（VP9）</option>
+        <option value="gif">GIF 动图</option>
+      </select></div>
 
       <!-- 进度条：官方固有元素 progress.win-progress-bar（180×4；列表占用 = 行数 / 上限） -->
       <p class="win-type-body" style="margin-bottom:4px">列表占用 <span id="demoProgressValue">3</span> / 10</p>
