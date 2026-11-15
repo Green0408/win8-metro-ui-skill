@@ -90,10 +90,12 @@
      信息搬到控制台了 —— 想做工具就不该有这条非 Metro 的横条。
      想看它，把 SHOW_ANIM_LOG 打开（脚本里），模板里所有 status() 调用点原样保留。 */
 
-  /* 工具栏 */
-  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
-  /* 按钮外观一律用官方 .win-button（见 win8-controls.css），这里只放布局 */
-  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  /* 工具栏：按钮外观一律用官方 .win-button（见 win8-controls.css），这里只放布局 */
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+  /* 工具栏里的分组分隔：单选组和「新增」是同一件事，用 1px 竖线隔开 */
+  .toolbar-sep { width: 1px; height: 16px; background: #3d3d3d; }
+  /* 列表工具栏：排序 + 恢复默认排序。列表级操作就近放，不塞进属性面板 */
+  .list-tools { display: flex; align-items: center; gap: 12px; margin: 0 0 10px; }
 
   /* 主区：列表 + 详情 */
   .workbench { display: grid; grid-template-columns: minmax(260px, 380px) 1fr; gap: 14px; align-items: start; }
@@ -143,6 +145,7 @@
   .demo-radios { display: grid; gap: 4px; }
   .demo-radios > div { display: flex; align-items: center; }
   .demo-radios label { cursor: pointer; }
+  .demo-radios--inline { display: flex; gap: 14px; }   /* 放进工具栏时横排 */
   /* 文本框 / 多行文本：官方只给了 .win-textbox 宽 296，多行没给宽度 —— 跟它对齐就行 */
   .demo-textarea { width: 296px; }
 
@@ -284,6 +287,31 @@
       <button class="win-button" data-act="reposition">重排</button>
       <button class="win-button" data-act="popup">更多操作</button>
       <button class="win-button" data-act="showEdge">应用栏</button>
+
+      <!-- 单选：官方固有元素 input[type=radio].win-radio（与复选框同 20×20 / 2px 边框，
+           容器是 50% 圆；勾选态 = 强调色实心圆片，见 win8-controls.css 里那条 ⚠ 说明）。
+           放在「新增」旁边是**语义**要求：它决定新项插到哪，和新增是同一个动作的两半。
+           同组同名，读屏才读得成一组。 -->
+      <span class="toolbar-sep" aria-hidden="true"></span>
+      <span class="win-type-caption" id="demoInsertLabel">新增项插到</span>
+      <div class="demo-radios demo-radios--inline" role="radiogroup" aria-labelledby="demoInsertLabel">
+        <div><input type="radio" class="win-radio" id="demoInsertTop" name="demoInsert" checked>
+             <label class="win-type-caption" for="demoInsertTop">顶部</label></div>
+        <div><input type="radio" class="win-radio" id="demoInsertBottom" name="demoInsert">
+             <label class="win-type-caption" for="demoInsertBottom">底部</label></div>
+      </div>
+    </div>
+
+    <!-- 列表工具栏：排序是**列表级**操作，放在列表旁边而不是塞进「属性」面板。
+         下拉框 = 官方固有元素 select.win-dropdown；恢复默认排序用次要操作形态 a.win-link。 -->
+    <div class="list-tools win-controls">
+      <label class="win-type-caption" for="demoSort">排序</label>
+      <select class="win-dropdown" id="demoSort">
+        <option value="none">按添加顺序</option>
+        <option value="asc">名称升序</option>
+        <option value="desc">名称降序</option>
+      </select>
+      <a class="win-link win-type-caption" href="#" id="demoResetSort">恢复默认排序</a>
     </div>
 
     <div class="workbench">
@@ -373,35 +401,9 @@
       <div><textarea class="win-textarea demo-textarea" id="demoNote" rows="3"
                      placeholder="最多 120 字，可留空"></textarea></div>
 
-      <!-- 单选：官方固有元素 input[type=radio].win-radio —— 与复选框同 20×20 / 2px 边框，
-           差别只是容器是 50% 圆；勾选态 = 强调色实心圆片（官方 less 只给 border-color，
-           圆心由系统画，本库按「实心圆片」复刻，见 win8-controls.css 里那条 ⚠ 说明）。
-           同组用同一个 name，读屏才会读成一组。 -->
-      <p class="win-type-body" id="demoInsertLabel" style="margin:12px 0 4px">新增项插到</p>
-      <div class="demo-radios" role="radiogroup" aria-labelledby="demoInsertLabel">
-        <div><input type="radio" class="win-radio" id="demoInsertTop" name="demoInsert" checked>
-             <label class="win-type-body" for="demoInsertTop">列表顶部</label></div>
-        <div><input type="radio" class="win-radio" id="demoInsertBottom" name="demoInsert">
-             <label class="win-type-body" for="demoInsertBottom">列表底部</label></div>
-      </div>
-
-      <!-- 链接：官方固有元素 a.win-link（强调色 + 下划线，hover 转 @baseMid）。
-           工具界面里的**次要操作**优先用链接，别一律做成按钮。 -->
-      <p class="win-type-body" style="margin:12px 0">
-        <a class="win-link" href="#" id="demoResetSort">恢复默认排序</a>
-      </p>
-
       <!-- 官方把滑块当**固有元素**样式化（input[type=range].win-slider），没有 Slider 控件类 -->
       <label class="win-type-body" for="demoSlider">行高 <span id="demoSliderValue">18</span> px</label>
       <div><input type="range" class="win-slider" id="demoSlider" min="12" max="40" step="1" value="18"></div>
-
-      <!-- 下拉框：官方固有元素 select.win-dropdown（2px 边框、min-height 32px、方角） -->
-      <label class="win-type-body" for="demoSort">列表排序</label>
-      <div><select class="win-dropdown" id="demoSort">
-        <option value="none">按添加顺序</option>
-        <option value="asc">名称升序</option>
-        <option value="desc">名称降序</option>
-      </select></div>
 
       <!-- 进度条：官方固有元素 progress.win-progress-bar（180×4；列表占用 = 行数 / 上限） -->
       <p class="win-type-body" style="margin-bottom:4px">列表占用 <span id="demoProgressValue">3</span> / 10</p>
