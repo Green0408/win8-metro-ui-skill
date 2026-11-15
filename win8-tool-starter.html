@@ -82,7 +82,10 @@
   }
 
   /* 字号/字重一律来自 win8-controls.css 的官方字体斜坡，这里只管颜色与间距 */
-  h1 { margin: 0 0 4px; }                        /* .win-type-subheader 34/200 */
+  /* 页面纵向节奏：标题下方留 28px —— 对齐 Win8 原版截图的实测比例（标题字底 → 下方控件顶 = 49px，
+     标题字号约 40px，比值 1.22）；我们标题 34px，目标视觉间隙 ≈ 42px，减去行盒半行距 ~8px，故 margin 取 28。
+     标题紧贴内容会显得"没排过版"。 */
+  h1 { margin: 0 0 28px; }                       /* .win-type-subheader 34/200 */
   .sub { color: #9a9a9a; margin: 0 0 20px; }     /* .win-type-caption   12/400 */
   .hint { color: #7fd6a0; margin: 0 0 12px; }    /* .win-type-caption */
 
@@ -91,11 +94,11 @@
      想看它，把 SHOW_ANIM_LOG 打开（脚本里），模板里所有 status() 调用点原样保留。 */
 
   /* 工具栏：按钮外观一律用官方 .win-button（见 win8-controls.css），这里只放布局 */
-  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 24px; }
   /* 工具栏里的分组分隔：单选组和「新增」是同一件事，用 1px 竖线隔开 */
   .toolbar-sep { width: 1px; height: 16px; background: #3d3d3d; }
   /* 列表工具栏：排序 + 恢复默认排序。列表级操作就近放，不塞进属性面板 */
-  .list-tools { display: flex; align-items: center; gap: 12px; margin: 0 0 10px; }
+  .list-tools { display: flex; align-items: center; gap: 12px; margin: 0 0 12px; }
 
   /* 主区：列表 + 详情 */
   .workbench { display: grid; grid-template-columns: minmax(260px, 380px) 1fr; gap: 14px; align-items: start; }
