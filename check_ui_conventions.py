@@ -162,6 +162,26 @@ def check(path: Path):
     n_batch = len(re.findall(r'data-batch="', html))
     add(n_batch > 0, "页内区域标注 data-batch", "共 %d 处" % n_batch)
 
+    # 5b. 批次要合并：相邻、同一件事的元素用**同一个** data-batch 值（同批一起进场）。
+    #     每页超过 3 批会让进场节奏碎成好几段（KIT.md 规则 23）。
+    page_bodies = re.findall(
+        r'<section[^>]*class="[^"]*\bpage\b[^"]*"[^>]*>(.*?)</section>', html, re.S)
+    for body in page_bodies:
+        keys = re.findall(r'data-batch="([^"]+)"', body)
+        distinct = len(set(keys))
+        if distinct > 3:
+            warn(False, "每页进场批次不超过 3 批",
+                 "本页有 %d 批（%s）；把同一件事的相邻元素合成一批，别一个元素一批（KIT.md 规则 23）"
+                 % (distinct, ", ".join(sorted(set(keys)))))
+
+    # 5c. 大标题下面不要挂说明性副标题/注释（AI 通病的"到处注释"）
+    for body in page_bodies:
+        m = re.search(r'</h1>\s*<p[^>]*class="([^"]*)"', body)
+        if m and re.search(r'\b(sub|hint)\b', m.group(1)):
+            warn(False, "大标题下不挂说明性副标题",
+                 "h1 后面紧跟 class=\"%s\" 的段落；说明文字写进代码注释，不要上界面（KIT.md 规则 24）"
+                 % m.group(1))
+
     # 6. 转场入口必须清理出场残留（黑屏防护）
     if "function transitionTo" in html or "transitionTo =" in html:
         ok_clean = "to.style.opacity" in html and "from.style.opacity" in html

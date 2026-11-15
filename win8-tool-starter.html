@@ -277,15 +277,14 @@
   <!-- data-enter-on-load：打开页面就播一次官方的分批进场（KIT.md 规则 21；脚本与 checker 都靠这个标记）。
        想改成"首屏静止"就删掉这个属性 —— 那等于放弃这条 KIT 约定，请在页面里写 kit-lint-ignore 说明原因。 -->
   <section class="page" id="mainPage" aria-label="主页面" data-enter-on-load>
-    <!-- 大标题独占批次 1；其余区域依次顺延（官方 enterPage 的分区由应用自己定） -->
+    <!-- 批次要克制：**同批 = 同一个 data-batch 值**，一起进场。
+         标题和它下面那排操作按钮是「一件事」，放同一批 —— 别一个元素一批，那会让进场节奏碎成好几段
+         （KIT.md 规则 15 的批次条款）。大标题下面不要挂说明性副标题：标题自己应该说得清。 -->
     <h1 class="win-type-subheader" data-batch="1">工具名</h1>
-    <p class="sub win-type-caption" data-batch="2">一句话说明这个工具做什么 · 全部动画取自微软官方 WinJS 参数</p>
-
 
     <!-- 工具栏跟着内容一起进场：这里**不加** .win-controls（那个类是"控件只 fadeIn、不参与滑入"的开关，
-         用于命令条上的控件）。本工具栏是页面内容的一部分，官方 enterPage 的批次区域本来就包含它，
-         所以直接给 data-batch，让它和标题之后的内容同批滑进来。 -->
-    <div class="toolbar" data-batch="3">
+         用于命令条上的控件）。本工具栏是页面内容的一部分，官方 enterPage 的批次区域本来就包含它。 -->
+    <div class="toolbar" data-batch="1">
       <button class="win-button win-button-primary" data-act="add">新增</button>
       <button class="win-button" data-act="reposition">重排</button>
       <button class="win-button" data-act="popup">更多操作</button>
@@ -308,7 +307,7 @@
     <!-- 列表工具栏：排序是**列表级**操作，放在列表旁边而不是塞进「属性」面板。
          下拉框 = 官方固有元素 select.win-dropdown；恢复默认排序用次要操作形态 a.win-link。
          它和列表同批（同一个 data-batch 值 = 同一批次，一起进场），避免"列表滑、这一行不滑"。 -->
-    <div class="list-tools" data-batch="4">
+    <div class="list-tools" data-batch="2">
       <label class="win-type-caption" for="demoSort">排序</label>
       <select class="win-dropdown" id="demoSort">
         <option value="none">按添加顺序</option>
@@ -319,15 +318,16 @@
     </div>
 
     <div class="workbench">
-      <div class="list" id="list" data-batch="4"></div>
-      <div class="detail" data-batch="5"><div class="detail-body" id="detailBody"></div></div>
+      <div class="list" id="list" data-batch="2"></div>
+      <div class="detail" data-batch="3"><div class="detail-body" id="detailBody"></div></div>
     </div>
   </section>
 
   <section class="page back" id="aboutPage" aria-label="关于页">
     <h1 class="win-type-subheader" data-batch="1">关于</h1>
-    <p class="sub win-type-caption" data-batch="2">第二页用来演示页面转场</p>
-    <p class="hint win-type-caption" data-batch="3">进场 = 该转场的官方动画（框架）+ enterPage 分批内容（区域从右往左滑）</p>
+    <!-- 页面转场演示：这一页没有业务内容，说明文字留在这里是给模板使用者看的。
+         真实工具页里，大标题下面不需要这种说明性副标题（KIT.md 规则 31）。 -->
+    <p class="win-type-caption" data-batch="1">第二页用来演示页面转场</p>
     <!-- 控件不参与分批滑入（KIT.md 规则 15）：官方对按钮用 fadeIn -->
     <p class="page-actions win-controls"><button class="win-button" data-act="back">← 返回</button></p>
   </section>
