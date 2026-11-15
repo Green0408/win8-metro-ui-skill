@@ -507,6 +507,73 @@
     background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='rgba(0,0,0,0.5)' stroke-width='1.5'/%3E%3C/svg%3E");
 }
 
+/* ── 浮层菜单触发器 .win-flyout-trigger + 菜单浮层 .win-menu ─────────────────
+   外观与原版「Collection」页截图一致（触发器和展开态都逐像素量过）：
+
+     触发器   字号 20 · 字色 #C2C2C2（≈@baseMediumHigh）· 箭头 12×7 细描边 · 文字↔箭头 8
+     菜单     条目高 56 · 文字左内边距 24 · 字色 #222（浅色主题）
+     选中项   应用强调色填充 + 反色文字（原版是绿底近白字，绿是那个应用的强调色）
+     底色     浅色应用 = 白底无边框；深色应用 = 深底 + 1px 描边（**跟应用主题走**，不是写死）
+
+   ⚠ 触发器是 <button>，箭头用 ::after 画（`currentColor` 描边）—— 所以悬停时文字和箭头
+     一起变深浅，不需要像 <select> 那样备三份 SVG。
+   ⚠ 菜单整体没有官方 less 可抄（raw/ 里没有 Menu 的源），几何全部来自截图实测；
+     强调色、深浅色由主题变量决定，不是抄原版那个绿。 */
+.win-flyout-trigger {
+    display: inline-flex; align-items: center; gap: 8px;   /* 文字↔箭头 8（实测） */
+    margin: 0; padding: 0;
+    border: 0; border-radius: 0;
+    background: transparent;
+    color: rgba(255, 255, 255, .76);                        /* 实测 #C2C2C2 */
+    font: inherit; font-size: 20px; font-weight: 400; line-height: 1.2;
+    cursor: pointer;
+}
+.win-flyout-trigger::after {
+    content: "";
+    width: 8px; height: 8px; margin-top: -5px;              /* 12×7 视觉尺寸：8px 方块旋 45° */
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: rotate(45deg);
+}
+.win-flyout-trigger:hover,
+.win-flyout-trigger:active,
+.win-flyout-trigger[aria-expanded="true"] { color: #fff; }  /* 只变深浅，不出底块 */
+.win-flyout-trigger:focus-visible { outline: 1px dotted currentColor; }
+.win-light .win-flyout-trigger { color: rgba(0, 0, 0, .7); }
+.win-light .win-flyout-trigger:hover,
+.win-light .win-flyout-trigger:active,
+.win-light .win-flyout-trigger[aria-expanded="true"] { color: #000; }
+
+.win-menu {
+    position: absolute; z-index: 20;
+    min-width: 220px; max-width: 420px;
+    margin: 0; padding: 0; list-style: none;
+    /* 深色应用：深底 + 1px 描边（与模板既有 #popup 同一套） */
+    background: #262626;
+    border: 1px solid #3d3d3d;
+    /* 隐藏时必须退出命中测试 */
+    opacity: 0; visibility: hidden;
+}
+.win-menu.open { visibility: visible; }
+.win-menu-item {
+    display: flex; align-items: center;
+    height: 56px; padding: 0 24px;                          /* 实测：条目 56 · 左内边距 24 */
+    font-size: 20px; color: #fff;
+    white-space: nowrap; cursor: pointer;
+}
+.win-menu-item:hover { background: rgba(255, 255, 255, .08); }
+.win-menu-item:active { background: rgba(255, 255, 255, .12); }
+.win-menu-item[aria-selected="true"],
+.win-menu-item[aria-selected="true"]:hover {
+    background: var(--win-accent);
+    color: var(--win-on-accent, #000);
+}
+/* 浅色应用：白底、无边框（原版实测）、文字 #222 */
+.win-light .win-menu { background: #fff; border: 0; box-shadow: 0 1px 2px rgba(0, 0, 0, .15); }
+.win-light .win-menu-item { color: #222; }
+.win-light .win-menu-item:hover { background: rgba(0, 0, 0, .06); }
+.win-light .win-menu-item:active { background: rgba(0, 0, 0, .1); }
+
 /* ── 进度条（官方固有元素 progress.win-progress-bar）──────────────────────
    src/less/styles-intrinsic.less §Progress
      尺寸 180×4；`.win-medium` 296 宽；`.win-large` 100% 宽

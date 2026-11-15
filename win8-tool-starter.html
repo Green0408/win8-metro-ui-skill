@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
@@ -99,6 +99,8 @@
   .toolbar-sep { width: 1px; height: 16px; background: #3d3d3d; }
   /* 列表工具栏：排序 + 恢复默认排序。列表级操作就近放，不塞进属性面板 */
   .list-tools { display: flex; align-items: center; gap: 16px; margin: 0 0 12px; }
+  .sort-control { position: relative; display: inline-flex; }
+  .sort-control .win-menu { top: calc(100% + 4px); left: 0; }
 
   /* 主区：列表 + 详情 */
   .workbench { display: grid; grid-template-columns: minmax(260px, 380px) 1fr; gap: 14px; align-items: start; }
@@ -277,8 +279,7 @@
   </header>
   <div class="win-splitview-content">
   <!-- 主页面：标题+工具栏=批次1（主要控件要尽早可用），列表=批次2，详情=批次3 -->
-  <!-- data-enter-on-load：打开页面就播一次官方的分批进场（KIT.md 规则 21；脚本与 checker 都靠这个标记）。
-       想改成"首屏静止"就删掉这个属性 —— 那等于放弃这条 KIT 约定，请在页面里写 kit-lint-ignore 说明原因。 -->
+  <!-- data-enter-on-load：打开页面就播一次官方的分批进场（KIT.md 规则 20）。想改成"首屏静止"就删掉这个属性。 -->
   <section class="page" id="mainPage" aria-label="主页面" data-enter-on-load>
     <!-- 批次要克制：**同批 = 同一个 data-batch 值**，一起进场。
          标题和它下面那排操作按钮是「一件事」，放同一批 —— 别一个元素一批，那会让进场节奏碎成好几段
@@ -308,15 +309,21 @@
     </div>
 
     <!-- 列表工具栏：排序是**列表级**操作，放在列表旁边而不是塞进「属性」面板。
-         排序用**扁平触发器**（`.win-dropdown-flat`：文字 + 细箭头），照 Win8 原版「Collection」页
-         那种筛选/排序下拉的样子；它仍是原生 select，键盘/读屏/移动端行为不变。
-         「恢复默认排序」是次要动作，用链接。 -->
+         触发器用 `.win-flyout-trigger`（文字 + 细箭头），点开是 `.win-menu` 菜单浮层：
+         外观照 Win8 原版「Collection」页实测（条目 56 高 / 左内边距 24 / 强调色填充选中项），
+         底色跟应用主题走（深色应用深底、浅色应用白底）。开合动画走官方 showPopup / hidePopup。 -->
     <div class="list-tools" data-batch="2">
-      <select class="win-dropdown win-dropdown-flat" id="demoSort" aria-label="排序方式">
-        <option value="none">按添加顺序</option>
-        <option value="asc">名称升序</option>
-        <option value="desc">名称降序</option>
-      </select>
+      <div class="sort-control">
+        <button class="win-flyout-trigger" type="button" id="demoSortTrigger"
+                aria-haspopup="listbox" aria-expanded="false" aria-controls="demoSortMenu">
+          <span id="demoSortLabel">按添加顺序</span>
+        </button>
+        <ul class="win-menu" id="demoSortMenu" role="listbox" aria-label="排序方式">
+          <li class="win-menu-item" role="option" data-value="none" aria-selected="true">按添加顺序</li>
+          <li class="win-menu-item" role="option" data-value="asc" aria-selected="false">名称升序</li>
+          <li class="win-menu-item" role="option" data-value="desc" aria-selected="false">名称降序</li>
+        </ul>
+      </div>
       <a class="win-link win-type-body" href="#" id="demoResetSort">恢复默认排序</a>
     </div>
 
@@ -966,26 +973,96 @@
     demoSlider.addEventListener('input', function () { demoSliderValue.textContent = demoSlider.value; });
   }
 
-  /* 下拉框（官方固有元素 select.win-dropdown）：选排序方式就真的给列表排序 */
-  var demoSort = document.getElementById('demoSort');
+  /* ── 排序菜单：.win-flyout-trigger + .win-menu ──────────────────────────
+     开合动画用**官方** showPopup / hidePopup（位移 367ms + 淡入 83ms），
+     和模板里「弹出菜单」模块同一套；键盘/读屏按 listbox 语义接线。 */
+  var sortTrigger = document.getElementById('demoSortTrigger');
+  var sortMenu = document.getElementById('demoSortMenu');
+  var sortLabel = document.getElementById('demoSortLabel');
   var originalOrder = null;                 // 首次排序前记下原始顺序，供「恢复默认排序」用
-  if (demoSort) {
-    demoSort.addEventListener('change', function () {
-      var rows = [].slice.call(listEl.children);
-      if (demoSort.value === 'none') { return; }                 // 原始顺序不再记，这里只做升/降序
-      if (!originalOrder) { originalOrder = rows.slice(); }
-      rows.sort(function (a, b) {
-        var x = (a.dataset.title || ''), y = (b.dataset.title || '');
-        return demoSort.value === 'asc' ? x.localeCompare(y, 'zh') : y.localeCompare(x, 'zh');
+  var sortOpen = false;
+  var sortValue = 'none';
+
+  function sortItems() { return [].slice.call(sortMenu.children); }
+
+  function applySort(value) {
+    var rows = [].slice.call(listEl.children);
+    if (value === 'none' || !originalOrder) { return; }   // 原始顺序不再记，这里只做升/降序
+    rows.sort(function (a, b) {
+      var x = (a.dataset.title || ''), y = (b.dataset.title || '');
+      return value === 'asc' ? x.localeCompare(y, 'zh') : y.localeCompare(x, 'zh');
+    });
+    /* 官方 FLIP 三段式：先建动画对象（此刻记录位置）→ 再按新顺序改 DOM → execute()。 */
+    var anim = A.createRepositionAnimation(rows);
+    rows.forEach(function (r) { listEl.appendChild(r); });
+    anim.execute();
+    status('列表排序 · ' + value + ' · createRepositionAnimation 367ms');
+  }
+
+  function setSort(value, label) {
+    sortValue = value;
+    sortLabel.textContent = label;
+    sortItems().forEach(function (li) {
+      li.setAttribute('aria-selected', String(li.dataset.value === value));
+    });
+    if (!originalOrder) { originalOrder = [].slice.call(listEl.children); }
+    applySort(value);
+  }
+
+  function showSortMenu() {
+    if (!sortMenu || sortOpen) { return; }
+    sortMenu.classList.add('open');
+    sortMenu.style.opacity = '0';
+    A.showPopup(sortMenu);                   // 官方开浮层动画
+    sortTrigger.setAttribute('aria-expanded', 'true');
+    sortOpen = true;
+    var current = sortItems().filter(function (li) { return li.getAttribute('aria-selected') === 'true'; })[0];
+    if (current) { current.focus(); }
+  }
+
+  function hideSortMenu(focusTrigger) {
+    if (!sortMenu || !sortOpen) { return; }
+    sortOpen = false;
+    sortTrigger.setAttribute('aria-expanded', 'false');
+    A.hidePopup(sortMenu).then(function () { sortMenu.classList.remove('open'); });
+    if (focusTrigger) { sortTrigger.focus(); }
+  }
+
+  if (sortTrigger && sortMenu) {
+    sortTrigger.addEventListener('click', function () {
+      sortOpen ? hideSortMenu(true) : showSortMenu();
+    });
+
+    sortItems().forEach(function (li) {
+      li.tabIndex = -1;
+      li.addEventListener('click', function () {
+        setSort(li.dataset.value, li.textContent);
+        hideSortMenu(true);
       });
-      /* 官方 FLIP 三段式：**先**建动画对象（此刻记录位置）→ 再按新顺序改 DOM → execute()。
-         原来这里调的是页面自己的 reposition() —— 那个函数是"把列表整个翻过来"的演示，
-         它会把刚排好的顺序再倒一遍，等于排序没生效（实测：选"名称升序"结果仍是 4,3,2,1）。
-         重排动画本身要继续用它，排序这里只借用官方的创建/执行两段。 */
-      var anim = A.createRepositionAnimation(rows);
-      rows.forEach(function (r) { listEl.appendChild(r); });
-      anim.execute();
-      status('列表排序 · ' + demoSort.selectedOptions[0].textContent + ' · createRepositionAnimation 367ms');
+    });
+
+    // 键盘：上下键在条目间移动，Enter/Space 选中，Esc 收起并回到触发器
+    sortMenu.addEventListener('keydown', function (e) {
+      var items = sortItems();
+      var i = items.indexOf(document.activeElement);
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        var next = e.key === 'ArrowDown' ? Math.min(i + 1, items.length - 1) : Math.max(i - 1, 0);
+        items[next].focus();
+      } else if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        if (i >= 0) { items[i].click(); }
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        hideSortMenu(true);
+      }
+    });
+
+    // light-dismiss：点菜单/触发器之外的位置收起（与模板里「弹出菜单」同样的规则）
+    document.addEventListener('pointerdown', function (e) {
+      if (!sortOpen) { return; }
+      if (e.target.closest('.sort-control')) { return; }
+      hideSortMenu(false);
     });
   }
 
@@ -993,10 +1070,10 @@
      这里做「恢复默认排序」——锚点默认会跳转，先 preventDefault；
      排序本身也走官方 FLIP（createRepositionAnimation），不是瞬间跳。 */
   var demoResetSort = document.getElementById('demoResetSort');
-  if (demoResetSort && demoSort) {
+  if (demoResetSort && sortLabel) {
     demoResetSort.addEventListener('click', function (ev) {
       ev.preventDefault();
-      demoSort.value = 'none';
+      setSort('none', '按添加顺序');
       if (!originalOrder) { return; }        // 还没排过序，本来就是默认顺序
       var anim = A.createRepositionAnimation(originalOrder);
       originalOrder.forEach(function (r) { listEl.appendChild(r); });

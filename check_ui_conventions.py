@@ -26,7 +26,8 @@ EXTENSIONS = {
     "isAnimationEnabled", "fast", "slow", "_fastAnimations", "_slowAnimations", "factor",
 }
 # 官方控件自带的按钮类（SplitView 的导航项与汉堡按钮就是这两类）
-OFFICIAL_BUTTON_CLASSES = ("win-button", "win-command", "win-splitviewcommand-button", "win-splitviewpanetoggle")
+OFFICIAL_BUTTON_CLASSES = ("win-button", "win-command", "win-splitviewcommand-button",
+                           "win-splitviewpanetoggle", "win-flyout-trigger")
 ALLOWED = official | EXTENSIONS
 
 
