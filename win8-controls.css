@@ -1,4 +1,4 @@
-﻿/*!
+/*!
  * win8-controls.css — WinJS 官方固有控件样式（按钮 / 输入框 / 复选框 / 链接 / 字体斜坡）
  *
  * 数值逐条取自微软 MIT 许可的 WinJS 源码，未做主观调整：
@@ -472,14 +472,40 @@
     background-size: 12px 7px;
     cursor: pointer;
 }
-.win-dropdown-flat:hover { color: #fff; }           /* @baseHigh */
-.win-dropdown-flat:active { color: rgba(255, 255, 255, .6); }   /* @baseMid */
-.win-dropdown-flat:focus { outline: none; border: 0; color: #fff; }
+/* 悬停/按下：文字与箭头**同时**变深浅。箭头是背景图，<select> 不能有伪元素，
+   所以只能按状态换三份 SVG（描边色跟着文字色走）。 */
+.win-dropdown-flat:hover {
+    color: #fff;                                   /* @baseHigh */
+    background-color: transparent;                 /* 盖掉 .win-dropdown:hover 的浅色底 */
+    border-color: transparent;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23ffffff' stroke-width='1.5'/%3E%3C/svg%3E");
+}
+.win-dropdown-flat:active {
+    color: rgba(255, 255, 255, .6);                /* @baseMid */
+    background-color: transparent;
+    border-color: transparent;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='rgba(255,255,255,0.6)' stroke-width='1.5'/%3E%3C/svg%3E");
+}
+.win-dropdown-flat:focus {
+    outline: none; border: 0; color: #fff;
+    background-color: transparent;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23ffffff' stroke-width='1.5'/%3E%3C/svg%3E");
+}
 .win-light .win-dropdown-flat {
     color: rgba(0, 0, 0, .7);
     background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23000000' stroke-opacity='.7' stroke-width='1.5'/%3E%3C/svg%3E");
 }
-.win-light .win-dropdown-flat:hover { color: #000; }
+.win-light .win-dropdown-flat:hover,
+.win-light .win-dropdown-flat:focus {
+    color: #000;
+    background-color: transparent;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23000000' stroke-width='1.5'/%3E%3C/svg%3E");
+}
+.win-light .win-dropdown-flat:active {
+    color: rgba(0, 0, 0, .5);
+    background-color: transparent;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='rgba(0,0,0,0.5)' stroke-width='1.5'/%3E%3C/svg%3E");
+}
 
 /* ── 进度条（官方固有元素 progress.win-progress-bar）──────────────────────
    src/less/styles-intrinsic.less §Progress
