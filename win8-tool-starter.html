@@ -282,7 +282,10 @@
     <p class="sub win-type-caption" data-batch="2">一句话说明这个工具做什么 · 全部动画取自微软官方 WinJS 参数</p>
 
 
-    <div class="toolbar win-controls">
+    <!-- 工具栏跟着内容一起进场：这里**不加** .win-controls（那个类是"控件只 fadeIn、不参与滑入"的开关，
+         用于命令条上的控件）。本工具栏是页面内容的一部分，官方 enterPage 的批次区域本来就包含它，
+         所以直接给 data-batch，让它和标题之后的内容同批滑进来。 -->
+    <div class="toolbar" data-batch="3">
       <button class="win-button win-button-primary" data-act="add">新增</button>
       <button class="win-button" data-act="reposition">重排</button>
       <button class="win-button" data-act="popup">更多操作</button>
@@ -303,8 +306,9 @@
     </div>
 
     <!-- 列表工具栏：排序是**列表级**操作，放在列表旁边而不是塞进「属性」面板。
-         下拉框 = 官方固有元素 select.win-dropdown；恢复默认排序用次要操作形态 a.win-link。 -->
-    <div class="list-tools win-controls">
+         下拉框 = 官方固有元素 select.win-dropdown；恢复默认排序用次要操作形态 a.win-link。
+         它和列表同批（同一个 data-batch 值 = 同一批次，一起进场），避免"列表滑、这一行不滑"。 -->
+    <div class="list-tools" data-batch="4">
       <label class="win-type-caption" for="demoSort">排序</label>
       <select class="win-dropdown" id="demoSort">
         <option value="none">按添加顺序</option>
@@ -315,8 +319,8 @@
     </div>
 
     <div class="workbench">
-      <div class="list" id="list" data-batch="3"></div>
-      <div class="detail" data-batch="4"><div class="detail-body" id="detailBody"></div></div>
+      <div class="list" id="list" data-batch="4"></div>
+      <div class="detail" data-batch="5"><div class="detail-body" id="detailBody"></div></div>
     </div>
   </section>
 
